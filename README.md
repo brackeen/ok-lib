@@ -55,7 +55,7 @@ ok_map_deinit(&map);
 
 ## Map Example With a Custom Key Type
 ```C
-typedef struct  {
+typedef struct {
     float x;
     float y;
 } point_t;
@@ -87,6 +87,13 @@ printf("Value at (%f, %f): %s\n", key.x, key.y, ok_map_get(&map, key));
 ok_map_deinit(&map);
 
 ```
+
+## Implementation overview
+
+The `ok_vec` is implemented as a structure containing an array that is reallocated as needed.
+
+The `ok_map` is implemented using [open addressing](https://en.wikipedia.org/wiki/Open_addressing),
+with linear probing and cleanup on deletion (no lazy deletion).
 
 ## Extras
 * [More examples](extras/example)
