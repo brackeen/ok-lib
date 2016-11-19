@@ -24,7 +24,9 @@ ok_vec_push(&vec, "dave");
 ok_vec_push(&vec, "mary");
 ok_vec_push(&vec, "steve");
 
-printf("A person: %s\n", ok_vec_get(&vec, 2));
+const char *value = ok_vec_get(&vec, 2);
+
+printf("A person: %s\n", value);
 
 ok_vec_foreach(&vec, const char *value) {
     printf("Name: %s\n", value);
@@ -44,7 +46,9 @@ ok_map_put(&map, "dave", "bananas");
 ok_map_put(&map, "mary", "grapes");
 ok_map_put(&map, "steve", "pineapples");
 
-printf("dave likes %s.\n", ok_map_get(&map, "dave"));
+char *value = ok_map_get(&map, "dave");
+
+printf("dave likes %s.\n", value);
 
 ok_map_foreach(&map, const char *key, char *value) {
     printf("> %s likes %s.\n", key, value);
@@ -88,7 +92,7 @@ ok_map_deinit(&map);
 
 ```
 
-## Implementation overview
+## Implementation Overview
 
 The `ok_vec` is implemented as a structure containing an array that is reallocated as needed.
 
