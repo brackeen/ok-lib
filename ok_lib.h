@@ -87,6 +87,11 @@
 // MARK: Vector
 
 /**
+ A value that indicates that a value could not be found.
+ */
+static const size_t OK_NOT_FOUND = SIZE_MAX;
+
+/**
  Declares a generic `ok_vec` struct or typedef.
  
  For example, and array of `int`s can be declared as a typedef:
@@ -102,7 +107,7 @@
  @return `{ value_type *values; size_t count; size_t capacity; }`
  */
 #define ok_vec_of(value_type) \
-    { value_type *values; size_t count; size_t capacity; }
+    { value_type *values; size_t count; size_t capacity; size_t _index; value_type _value; }
 
 /**
  Inits a vector.
@@ -223,6 +228,71 @@
     (ok_vec_ensure_capacity(vec, (vec2)->count) ? \
     (memcpy((vec)->values + (vec)->count, (vec2)->values, sizeof(*(vec)->values) * (vec2)->count), \
     ((vec)->count += (vec2)->count)) : 0)
+
+/**
+ Inserts a value at the specified location in the vector. The element currently at that
+ location, and all subsequent elements, are moved to the right by one position.
+
+ @param vec Pointer to the vector.
+ @param index `size_t` The index at which to insert the element. If the index is greater than or
+ equal to number of elements in the vector, the value is added to the end, like #ok_vec_push().
+ @param value The value to insert.
+ @return `true` if the value was successfully inserted into the vector, `false` otherwise (out of 
+ memory error).
+ */
+#define ok_vec_insert_at(vec, index, value) ( \
+    (vec)->_index = (index), \
+    ok_vec_ensure_capacity(vec, 1) ? ( \
+        (((vec)->_index + 1 < (vec)->count) ? \
+            memmove((vec)->values + (vec)->_index + 1, (vec)->values + (vec)->_index, \
+                    ((vec)->count - (vec)->_index - 1) * sizeof((vec)->_value)) : \
+            NULL), \
+        (vec)->values[(vec)->_index] = (value), \
+        (vec)->count++, \
+        true) : false \
+)
+
+/**
+ Gets the index of the first element that equals the specified value.
+
+ @param vec Pointer to the vector.
+ @param value The value to find.
+ @return `size_t` the index of the value in the vector, or #OK_NOT_FOUND if not found.
+ */
+#define ok_vec_index_of(vec, value) ( \
+    (vec)->_value = value, \
+    __ok_vec_index_of((vec)->values, &(vec)->_value, sizeof((vec)->_value), (vec)->count) \
+)
+
+/**
+ Removes an element at the specified location in the vector.
+
+ @param vec Pointer to the vector.
+ @param index `size_t` The index of the element to remove. If the index is greater than or
+ equal to number of elements in the vector, the size of the vector is reduced by one.
+ @return The new size of the vector.
+ */
+#define ok_vec_remove_at(vec, index) ( \
+    (vec)->_index = (index), \
+    (((vec)->_index + 1 < (vec)->count) ? \
+        memmove((vec)->values + (vec)->_index, (vec)->values + (vec)->_index + 1, \
+                ((vec)->count - (vec)->_index - 1) * sizeof((vec)->_value)) : \
+        NULL), \
+    ((vec)->count > 0 ? (vec)->count-- : 0) \
+)
+
+/**
+ Removes the first element in the vector that equals the specified value.
+
+ @param vec Pointer to the vector.
+ @param value The value to find and remove.
+ @return `size_t` the index of the removed element, or #OK_NOT_FOUND if not found.
+ */
+#define ok_vec_remove(vec, value) ( \
+    (vec)->_index = ok_vec_index_of(vec, value), \
+    (((vec)->_index != OK_NOT_FOUND) ? ok_vec_remove_at(vec, (vec)->_index) : 0),  \
+    (vec)->_index \
+)
 
 /**
  Foreach macro that iterates over the values in the vector.
@@ -718,6 +788,8 @@ struct __ok_map;
 OK_LIB_API bool __ok_vec_realloc(void **values, size_t min_capacity, size_t element_size,
                                  size_t *capacity);
 
+OK_LIB_API size_t __ok_vec_index_of(void *values, void *value, size_t element_size, size_t count);
+
 OK_LIB_API struct __ok_map *__ok_map_create(size_t initial_capacity,
                                             bool (*key_equals_func)(const void *key1,
                                                                     const void *key2),
@@ -894,6 +966,15 @@ OK_LIB_API bool __ok_vec_realloc(void **values, size_t min_capacity,
     } else {
         return false;
     }
+}
+
+OK_LIB_API size_t __ok_vec_index_of(void *values, void *value, size_t element_size, size_t count) {
+    for (size_t i = 0; i < count; i++, values = ok_ptr_offset(values, element_size)) {
+        if (memcmp(values, value, element_size) == 0) {
+            return i;
+        }
+    }
+    return OK_NOT_FOUND;
 }
 
 // MARK: Implementation Private map functions
