@@ -9,8 +9,8 @@
 int main() {
     std::cout << "Hello from C++!" << std::endl;
 
-    //ok::map<const char *, const char *> map; // This works too
-    ok::map<std::string, std::string> map;
+    //ok::map<std::string, std::string> map; // Disabled for now, failing in older versions of gcc/clang.
+    ok::map<const char *, const char *> map;
 
     // Put method
     map.put("dave", "bananas");

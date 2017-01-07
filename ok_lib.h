@@ -1,7 +1,7 @@
 /*
  ok-lib
  https://github.com/brackeen/ok-lib
- Copyright (c) 2016 David Brackeen
+ Copyright (c) 2016-2017 David Brackeen
 
  This software is provided 'as-is', without any express or implied warranty.
  In no event will the authors be held liable for any damages arising from the
@@ -89,7 +89,7 @@
 /**
  A value that indicates that a value could not be found.
  */
-static const size_t OK_NOT_FOUND = SIZE_MAX;
+static const size_t OK_NOT_FOUND = (~(size_t)0);
 
 /**
  Declares a generic `ok_vec` struct or typedef.
@@ -1138,7 +1138,7 @@ OK_LIB_API size_t __ok_map_count(const struct __ok_map *map) {
 }
 
 OK_LIB_API size_t __ok_map_capacity(const struct __ok_map *map) {
-    return map ? (1 << map->capacity_n) : OK_MAP_MIN_CAPACITY;
+    return map ? (1u << map->capacity_n) : OK_MAP_MIN_CAPACITY;
 }
 
 OK_LIB_API bool __ok_map_contains(const struct __ok_map *map, const void *key,
