@@ -2,17 +2,16 @@ The `build` folder is ignored via .gitignore, so it is a good place to to test a
 
 ##  Test
 ```
-mkdir build
-cd build
-cmake -G "Unix Makefiles" ..
-make
-./ok-lib-test 
+mkdir tmp && cd tmp && cmake .. && cmake --build . && ./ok-lib-test; cd .. && rm -rf tmp
 ```
 
-## Generate projects
+## Generate Xcode project
 ```
-mkdir build
-cd build
-cmake -G Xcode ..
-cmake -G "Visual Studio 14 2015" ..
+mkdir build && cd build && cmake -G Xcode ..
 ```
+
+## Generate Visual Studio project
+```
+mkdir build && cd build && cmake -G "Visual Studio 14 2015" ..
+```
+
