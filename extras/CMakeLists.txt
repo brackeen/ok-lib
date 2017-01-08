@@ -18,9 +18,7 @@ endif()
 
 # ok-lib
 include_directories(..)
-if (CMAKE_VERSION VERSION_GREATER "3.1")
-  source_group("" FILES ../ok_lib.h)
-endif()
+source_group("" FILES ../ok_lib.h)
 
 # Test
 file(GLOB test_files "test/*.h" "test/*.c")
