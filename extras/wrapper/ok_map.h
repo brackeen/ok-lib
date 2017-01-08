@@ -111,9 +111,9 @@ namespace ok {
         };
     };
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
     // MARK: Hash
@@ -155,8 +155,8 @@ namespace ok {
         return strcmp(str1, str2) == 0;
     }
 
-#ifdef __clang__
-#pragma clang diagnostic pop
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 }

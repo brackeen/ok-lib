@@ -833,9 +833,9 @@ OK_LIB_API void *__ok_map_next(const struct __ok_map *map, void *iterator, void 
 
 #ifdef OK_LIB_DEFINE
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-function"
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
 // Hash functions from Wang http://www.cris.com/~Ttwang/tech/inthash.htm
@@ -1272,8 +1272,8 @@ OK_LIB_API bool __ok_map_remove(struct __ok_map *map, const void *key, ok_hash_t
     return true;
 }
 
-#ifdef __clang__
-#pragma clang diagnostic pop
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 #endif // OK_LIB_DEFINE

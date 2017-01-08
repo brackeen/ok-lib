@@ -2,10 +2,14 @@
 #include <assert.h>
 #include <stdio.h>
 
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wshadow"
-#pragma clang diagnostic ignored "-Wfloat-equal"
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#pragma GCC diagnostic ignored "-Wunused-value"
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#endif
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -556,6 +560,6 @@ int main(void) {
     return 0;
 }
 
-#ifdef __clang__
-#pragma clang diagnostic pop
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
