@@ -552,11 +552,6 @@ int main(void) {
 
     ok_tests_finish();
 
-#ifdef _WIN32
-    printf("Press any key to continue...");
-    getchar();
-#endif
-
     return 0;
 }
 
