@@ -2,7 +2,7 @@ The `build` folder is ignored via .gitignore, so it is a good place to to test a
 
 ##  Test (Linux, Mac)
 ```
-mkdir tmp && cd tmp && cmake .. && cmake --build . && ./ok-lib-test; cd .. && rm -rf tmp
+mkdir tmp && cd tmp && cmake .. && cmake --build . && ./ok-lib-test; cd .. && rm -Rf tmp
 ```
 
 ##  Test (Windows PowerShell)
