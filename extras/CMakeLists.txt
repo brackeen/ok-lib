@@ -29,8 +29,8 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   # Disable unused-functions because of this GCC bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64079
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Wno-unused-function")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-  # Disable 'shadow variables'
-  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456")
+  # Disable 'shadow variables' and 'function not inlined'
+  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710")
 endif()
 
 # Example
