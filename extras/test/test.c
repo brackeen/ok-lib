@@ -11,6 +11,9 @@
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 #endif
+#ifdef WIN32
+#define strcat(dest, src) strcat_s(dest, sizeof(dest), src)
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -280,7 +283,7 @@ static void test_vec(void) {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    struct vec_of_strs ok_vec_of(const char *);
+    struct vec_of_strs ok_vec_of(char *);
     struct vec_of_strs str_vec;
     ok_vec_init(&str_vec);
 
@@ -324,7 +327,7 @@ static void test_vec(void) {
 static void test_map(void) {
     // str-to-str map
 
-    struct str_map_s ok_map_of(const char *, char *);
+    struct str_map_s ok_map_of(char *, char *);
     struct str_map_s str_map;
 
     bool success = ok_map_init(&str_map);
@@ -371,7 +374,7 @@ static void test_map(void) {
 
     char keys[1024] = {0};
     char values[1024] = {0};
-    ok_map_foreach(&str_map, const char *key, char *value) {
+    ok_map_foreach(&str_map, char *key, char *value) {
         strcat(keys, key);
         strcat(values, value);
     }
@@ -390,7 +393,7 @@ static void test_map(void) {
 
     // ok_map_foreach: No curly braces
     keys[0] = 0;
-    const char *key;
+    char *key;
     char *value;
     ok_map_foreach(&str_map, key, value)
         strcat(keys, key);
@@ -413,7 +416,7 @@ static void test_map(void) {
     // ok_map_foreach: Inner loop
     size_t count = 0;
     ok_map_foreach(&str_map, key, value) {
-        ok_map_foreach(&str_map, const char *key2, char *value2) {
+        ok_map_foreach(&str_map, char *key2, char *value2) {
             (void)value2;
             if (strcmp(key, key2) == 0) {
                 count++;
@@ -430,7 +433,7 @@ static void test_map(void) {
     ok_map_init(&str_map2);
     ok_map_put_all(&str_map2, &str_map);
     count = 0;
-    ok_map_foreach(&str_map2, const char *key, char *value) {
+    ok_map_foreach(&str_map2, char *key, char *value) {
         if (strcmp(ok_map_get(&str_map, key), value) == 0) {
             count++;
         }
@@ -444,7 +447,7 @@ static void test_map(void) {
 
     // str-to-int map
 
-    struct str_int_map_s ok_map_of(const char *, int);
+    struct str_int_map_s ok_map_of(char *, int);
     struct str_int_map_s str_int_map;
     ok_map_init(&str_int_map);
     ok_map_put(&str_int_map, "The answer", 42);
@@ -462,7 +465,7 @@ static void test_map(void) {
     ok_map_init_custom(&int_map, ok_int32_hash, ok_32bit_equals);
     for (int i = 0; i <= 9999; i++) {
         char *value = malloc(5);
-        sprintf(value, "%d", i);
+        snprintf(value, 5, "%d", i);
         ok_map_put(&int_map, i, value);
     }
     count = 0;
@@ -484,11 +487,11 @@ static void test_map(void) {
 
     // Structs as values
 
-    struct str_point_map_s ok_map_of(const char *, point_t);
+    struct str_point_map_s ok_map_of(char *, point_t);
     struct str_point_map_s str_point_map;
     ok_map_init(&str_point_map);
 
-    point_t p = {.x = 100, .y = 200};
+    point_t p = {.x = 100.0f, .y = 200.0f};
     ok_map_put(&str_point_map, "player1", p);
     point_t p2 = ok_map_get(&str_point_map, "player1");
     ok_assert(point_equals(&p, &p2), "struct values");
@@ -501,7 +504,9 @@ static void test_map(void) {
     ok_map_init_custom(&point_map, point_hash, point_equals);
     for (int x = 0; x <= 9; x++) {
         for (int y = 0; y <= 9; y++) {
-            point_t p = {.x = x, .y = y};
+            point_t p;
+            p.x = (float)x;
+            p.y = (float)y;
             ok_map_put(&point_map, p, x + 10 * y);
         }
     }
@@ -522,7 +527,7 @@ static void test_map(void) {
     ok_map_init_custom(&bad_map, bad_hash, ok_32bit_equals);
     for (int i = 0; i <= 9999; i++) {
         char *value = malloc(5);
-        sprintf(value, "%d", i);
+        snprintf(value, 5, "%d", i);
         ok_map_put(&bad_map, i, value);
     }
     count = 0;

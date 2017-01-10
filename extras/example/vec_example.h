@@ -9,7 +9,7 @@ static int ok_str_cmp(const void *a, const void *b) {
 }
 
 static void vec_example() {
-    typedef struct ok_vec_of(const char *) str_vec_t;
+    typedef struct ok_vec_of(char *) str_vec_t;
 
     str_vec_t vec;
     ok_vec_init(&vec);
@@ -22,7 +22,7 @@ static void vec_example() {
 
     ok_vec_sort(&vec, ok_str_cmp);
 
-    ok_vec_foreach(&vec, const char *value) {
+    ok_vec_foreach(&vec, char *value) {
         printf("Sorted Name: %s\n", value);
     }
 
