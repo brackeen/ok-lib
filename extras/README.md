@@ -2,13 +2,13 @@ The `build` folder is ignored via .gitignore, so it is a good place to to test a
 
 ##  Test (Linux, Mac)
 ```
-mkdir tmp && cd tmp && cmake .. && cmake --build . && ./ok-lib-test; cd .. && rm -Rf tmp
+mkdir tmp && cd tmp && cmake .. && cmake --build . && ctest --verbose; cd .. && rm -Rf tmp
 ```
 
 ##  Test (Windows PowerShell)
 
 ```
-mkdir tmp | Out-Null; if($?) { cd tmp }; if($?) { cmake .. }; if($?) { cmake --build . }; if($?) { .\Debug\ok-lib-test }; cd .. ; rm -r tmp
+mkdir tmp | Out-Null; if($?) { cd tmp }; if($?) { cmake .. }; if($?) { cmake --build . }; if($?) { ctest -C Debug --verbose }; cd .. ; rm -r tmp
 ```
 
 ## Generate Xcode project

@@ -33,6 +33,16 @@ elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710")
 endif()
 
+# CTest setup, using valgrind if found
+enable_testing()
+find_program(MEMCHECK_COMMAND valgrind)
+set(MEMCHECK_COMMAND_OPTIONS "--error-exitcode=1" "--leak-check=full")
+if(NOT MEMCHECK_COMMAND)
+  add_test(NAME ok-lib-test COMMAND ok-lib-test)
+else()
+  add_test(NAME ok-lib-test-memcheck COMMAND ${MEMCHECK_COMMAND} ${MEMCHECK_COMMAND_OPTIONS} ./ok-lib-test)
+endif()
+
 # Example
 file(GLOB example_files "example/*.h" "example/*.c")
 add_executable(ok-lib-example ../ok_lib.h ${example_files})

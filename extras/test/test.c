@@ -19,27 +19,30 @@
 
 // MARK: Test framework
 
-static unsigned long ok_test_total_count = 0;
-static unsigned long ok_test_success_count = 0;
+static int ok_test_total_count = 0;
+static int ok_test_failure_count = 0;
 
+#ifdef WIN32
+#define OK_FILE (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+#else
 #define OK_FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#endif
 #define ok_assert(condition, message) do {\
     ok_test_total_count++; \
-    if (condition) { \
-        ok_test_success_count++; \
-    } else { \
-        printf("\a"); /* beep */ \
+    if (!(condition)) { \
+        ok_test_failure_count++; \
         printf("FAIL: %s:%i - function: %s - test: %s\n", OK_FILE, __LINE__, __func__, message);\
     } \
 } while (0)
 
 static void ok_tests_start(void) {
     ok_test_total_count = 0;
-    ok_test_success_count = 0;
+    ok_test_failure_count = 0;
 }
 
 static void ok_tests_finish(void) {
-    printf("%lu of %lu tests passed\n", ok_test_success_count, ok_test_total_count);
+    printf("%s: %i of %i tests passed\n", OK_FILE, (ok_test_total_count - ok_test_failure_count),
+           ok_test_total_count);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -557,7 +560,7 @@ int main(void) {
 
     ok_tests_finish();
 
-    return 0;
+    return ok_test_failure_count;
 }
 
 #ifdef __GNUC__
