@@ -1,0 +1,21 @@
+language: cpp
+addons:
+  apt:
+    packages:
+      - valgrind
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+    - os: linux
+      compiler: gcc
+    - os: osx
+script:
+  - cmake --version
+  - cd extras && mkdir tmp && cd tmp && cmake -D TREAT_WARNINGS_AS_ERRORS=ON .. && cmake --build . && ctest --verbose
+notifications:
+  email:
+    recipients:
+      - brackeen+ci@gmail.com
+  on_success: change
+  on_failure: always

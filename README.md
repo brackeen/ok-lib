@@ -1,4 +1,6 @@
 # ok-lib
+[![Build Status](https://travis-ci.org/brackeen/ok-lib.svg?branch=master)](https://travis-ci.org/brackeen/ok-lib)
+
 Generic vector and hash maps for C.
 
 ## Goals
