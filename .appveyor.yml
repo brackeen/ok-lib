@@ -1,0 +1,12 @@
+build_script:
+  - cd extras
+  - mkdir tmp
+  - cd tmp
+  - cmake -D TREAT_WARNINGS_AS_ERRORS=ON ..
+  - cmake --build .
+  - ctest -C Debug --verbose
+notifications:
+  - provider: Email
+    to:
+      - brackeen+ci@gmail.com
+  - on_build_status_changed: true
