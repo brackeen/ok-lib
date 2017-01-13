@@ -4,7 +4,7 @@
 // MARK: Basic map example
 
 static void basic_map_example() {
-    typedef struct ok_map_of(char *, char *) str_map_t;
+    typedef struct ok_map_of(const char *, char *) str_map_t;
 
     str_map_t map;
     ok_map_init(&map);
@@ -37,7 +37,7 @@ static void basic_map_example() {
     *ok_map_put_and_get_ptr(&map, "cyrus") = "(who knows)"; // Define the value so we don't crash
 
     // Iterator
-    ok_map_foreach(&map, char *key, char *value) {
+    ok_map_foreach(&map, const char *key, char *value) {
         printf("> %s wants %s.\n", key, value);
     }
 
@@ -95,8 +95,8 @@ static void custom_map_example() {
 
 // MARK: Multimap example
 
-typedef struct ok_vec_of(char *) str_vec_t;
-typedef struct ok_map_of(char *, str_vec_t) multimap_t;
+typedef struct ok_vec_of(const char *) str_vec_t;
+typedef struct ok_map_of(const char *, str_vec_t) multimap_t;
 
 static void multimap_add(multimap_t *map, char *key, char *value) {
     str_vec_t *vec = ok_map_get_ptr(map, key);
@@ -118,16 +118,16 @@ static void multimap_example() {
     multimap_add(&map, "mary", "strawberries");
 
     // Print
-    ok_map_foreach(&map, char *key, str_vec_t vec) {
+    ok_map_foreach(&map, const char *key, str_vec_t vec) {
         printf("%s likes: [ ", key);
-        ok_vec_foreach(&vec, char *value) {
+        ok_vec_foreach(&vec, const char *value) {
             printf("%s ", value);
         }
         printf("]\n");
     }
 
     // Cleanup
-    ok_map_foreach(&map, char *key, str_vec_t vec) {
+    ok_map_foreach(&map, const char *key, str_vec_t vec) {
         (void)key;
         ok_vec_deinit(&vec);
     }

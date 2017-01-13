@@ -125,7 +125,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  @param vec Pointer to the vector.
  */
 #define ok_vec_deinit(vec) \
-    free((vec)->values)
+    free((void *)(vec)->values)
 
 /**
  Removes all elements from the vector, setting the count to 0. The capacity of the vector is not
@@ -362,7 +362,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  `qsort`.
  */
 #define ok_vec_sort(vec, compare_func) \
-    qsort((vec)->values, (vec)->count, sizeof(*((vec)->values)), compare_func)
+    qsort((void *)(vec)->values, (vec)->count, sizeof(*((vec)->values)), compare_func)
 
 /**
  Ensures that a vector has enough space for additional elements.
@@ -383,11 +383,11 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
  For example, a map of string keys with `int` values can be declared as a typedef:
 
-     typedef struct ok_map_of(char *, int) my_map_t;
+     typedef struct ok_map_of(const char *, int) my_map_t;
 
  or a struct:
 
-     struct my_map_s ok_map_of(char *, int);
+     struct my_map_s ok_map_of(const char *, int);
 
  @tparam key_type   The key type.
  @tparam value_type The value type.
@@ -414,7 +414,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  a compile-time error occurs.
  
  When using C11, this function works when keys are integers, floats, or strings. When using C99,
- this function only works with string keys (that is, `char *`).
+ this function only works with const string keys (that is, `const char *`).
  
  To init a map with a custom key, use #ok_map_init_custom() instead.
 
@@ -449,7 +449,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  if possible. If not possible, a compile-time error occurs.
 
  When using C11, this function works when keys are integers, floats, or strings. When using C99,
- this function only works with string keys (that is, `char *`).
+ this function only works with const string keys (that is, `const char *`).
 
  To init a map with a custom key, use #ok_map_init_custom_with_capacity() instead.
 
@@ -592,7 +592,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 #define ok_map_get(map, key) ( \
     (map)->entry.k = (key), \
     __ok_map_get((map)->m, &(map)->entry.k, (map)->key_hash_func((map)->entry.k), \
-                 &(map)->entry.v, sizeof((map)->entry.v)), \
+                 (void *)&(map)->entry.v, sizeof((map)->entry.v)), \
     (map)->entry.v \
 )
 
@@ -651,7 +651,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  
  Example:
  
-     ok_map_foreach(map, char *key, char *value) {
+     ok_map_foreach(map, const char *key, char *value) {
          printf("Name: %s  Phone: %s\n", key, value);
      }
 
@@ -661,8 +661,9 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  */
 #define ok_map_foreach(map, key_var, value_var) \
     for (uint8_t _keep = 1, _keep2 = true, *_i = NULL; _keep && \
-        ((_i = (uint8_t *)__ok_map_next((map)->m, _i, &(map)->entry.k, sizeof((map)->entry.k), \
-                                   &(map)->entry.v, sizeof((map)->entry.v))) != NULL); \
+        ((_i = (uint8_t *)__ok_map_next((map)->m, _i, (void *)&(map)->entry.k, \
+                                        sizeof((map)->entry.k), (void *)&(map)->entry.v, \
+                                        sizeof((map)->entry.v))) != NULL); \
         _keep = !_keep, _keep2 = !_keep2) \
     for (key_var = (map)->entry.k; _keep && _keep2; _keep2 = !_keep2) \
     for (value_var = (map)->entry.v; _keep; _keep = !_keep)
@@ -693,7 +694,7 @@ typedef uint32_t ok_hash_t;
 #    define ok_default_hash(key) (ok_static_assert(sizeof(__is_char(*key)) == sizeof(bool) && \
                                                    sizeof(*key) == sizeof(char), \
                                                    "Only works with `char *` type"), \
-                                                   ok_str_hash)
+                                                   ok_const_str_hash)
 #  endif
 #endif
 

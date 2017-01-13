@@ -286,7 +286,7 @@ static void test_vec(void) {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    struct vec_of_strs ok_vec_of(char *);
+    struct vec_of_strs ok_vec_of(const char *);
     struct vec_of_strs str_vec;
     ok_vec_init(&str_vec);
 
@@ -330,7 +330,7 @@ static void test_vec(void) {
 static void test_map(void) {
     // str-to-str map
 
-    struct str_map_s ok_map_of(char *, char *);
+    struct str_map_s ok_map_of(const char *, const char *);
     struct str_map_s str_map;
 
     bool success = ok_map_init(&str_map);
@@ -377,7 +377,7 @@ static void test_map(void) {
 
     char keys[1024] = {0};
     char values[1024] = {0};
-    ok_map_foreach(&str_map, char *key, char *value) {
+    ok_map_foreach(&str_map, const char *key, const char *value) {
         strcat(keys, key);
         strcat(values, value);
     }
@@ -396,8 +396,8 @@ static void test_map(void) {
 
     // ok_map_foreach: No curly braces
     keys[0] = 0;
-    char *key;
-    char *value;
+    const char *key;
+    const char *value;
     ok_map_foreach(&str_map, key, value)
         strcat(keys, key);
     ok_assert(strstr(keys, "dave") != NULL &&
@@ -419,7 +419,7 @@ static void test_map(void) {
     // ok_map_foreach: Inner loop
     size_t count = 0;
     ok_map_foreach(&str_map, key, value) {
-        ok_map_foreach(&str_map, char *key2, char *value2) {
+        ok_map_foreach(&str_map, const char *key2, const char *value2) {
             (void)value2;
             if (strcmp(key, key2) == 0) {
                 count++;
@@ -436,7 +436,7 @@ static void test_map(void) {
     ok_map_init(&str_map2);
     ok_map_put_all(&str_map2, &str_map);
     count = 0;
-    ok_map_foreach(&str_map2, char *key, char *value) {
+    ok_map_foreach(&str_map2, const char *key, const char *value) {
         if (strcmp(ok_map_get(&str_map, key), value) == 0) {
             count++;
         }
@@ -450,7 +450,7 @@ static void test_map(void) {
 
     // str-to-int map
 
-    struct str_int_map_s ok_map_of(char *, int);
+    struct str_int_map_s ok_map_of(const char *, int);
     struct str_int_map_s str_int_map;
     ok_map_init(&str_int_map);
     ok_map_put(&str_int_map, "The answer", 42);
@@ -490,7 +490,7 @@ static void test_map(void) {
 
     // Structs as values
 
-    struct str_point_map_s ok_map_of(char *, point_t);
+    struct str_point_map_s ok_map_of(const char *, point_t);
     struct str_point_map_s str_point_map;
     ok_map_init(&str_point_map);
 
