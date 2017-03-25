@@ -254,6 +254,9 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
 /**
  Gets the index of the first element that equals the specified value.
+ 
+ This function uses `memcmp` to test for equality, which may fail if values are structs with
+ padding.
 
  @param vec Pointer to the vector.
  @param value The value to find.
@@ -283,6 +286,9 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
 /**
  Removes the first element in the vector that equals the specified value.
+
+ This function uses `memcmp` to test for equality, which may fail if values are structs with
+ padding.
 
  @param vec Pointer to the vector.
  @param value The value to find and remove.
