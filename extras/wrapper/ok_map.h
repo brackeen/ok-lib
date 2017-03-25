@@ -91,8 +91,8 @@ namespace ok {
         public:
             iterator(const map_t* map, void*iter = NULL) : map_(map), iter_(iter) { }
             iterator& operator++() {
-                iter_ = __ok_map_next(map_->m, iter_, &pair_.key, sizeof(pair_.key),
-                                      &pair_.value, sizeof(pair_.value));
+                iter_ = _ok_map_next(map_->m, iter_, &pair_.key, sizeof(pair_.key),
+                                     &pair_.value, sizeof(pair_.value));
                 return *this;
             }
             iterator operator++(int) {
