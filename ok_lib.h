@@ -310,7 +310,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
  Example:
 
- ok_vec_foreach(map, char *value) {
+ ok_vec_foreach(vec, char *value) {
      printf("Value: %s\n", value);
  }
 
@@ -322,6 +322,27 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
     for (var = *((vec)->values + _i); _keep; _keep = !_keep)
 
 /**
+ Foreach macro that iterates over the values in the vector, in reverse order.
+
+ The vector should not be modified during iteration. A call to #ok_vec_push()
+ during iteration could cause as crash.
+
+ The `break` and `continue` keywords are supported during iteration.
+
+ Example:
+
+ ok_vec_foreach_rev(vec, char *value) {
+     printf("Value: %s\n", value);
+ }
+
+ @param vec   Pointer to the vector.
+ @param var   The value type and name.
+ */
+#define ok_vec_foreach_rev(vec, var) \
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
+    for (var = *((vec)->values + (_len - _i - 1)); _keep; _keep = !_keep)
+
+/**
  Foreach macro that iterates over pointers to the values in the vector.
 
  The vector should not be modified during iteration. A call to #ok_vec_push()
@@ -331,7 +352,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
  Example:
 
- ok_vec_foreach_ptr(map, char **value) {
+ ok_vec_foreach_ptr(vec, char **value) {
      printf("Value: %s\n", *value);
  }
 
@@ -341,6 +362,27 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 #define ok_vec_foreach_ptr(vec, var) \
     for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
     for (var = (vec)->values + _i; _keep; _keep = !_keep)
+
+/**
+ Foreach macro that iterates over pointers to the values in the vector.
+
+ The vector should not be modified during iteration. A call to #ok_vec_push()
+ during iteration could cause as crash.
+
+ The `break` and `continue` keywords are supported during iteration.
+
+ Example:
+
+ ok_vec_foreach_ptr_rev(vec, char **value) {
+     printf("Value: %s\n", *value);
+ }
+
+ @param vec   Pointer to the vector.
+ @param var   The value type and name.
+ */
+#define ok_vec_foreach_ptr_rev(vec, var) \
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
+    for (var = (vec)->values + (_len - _i - 1); _keep; _keep = !_keep)
 
 /**
  Applies a function to each element in a vector.

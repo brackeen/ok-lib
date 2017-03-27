@@ -174,6 +174,44 @@ static void test_vec(void) {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // ok_vec_foreach_rev
+    sum = 0;
+    ok_vec_foreach_rev(&vec, int value) {
+        sum += value;
+    }
+    ok_assert(sum == 60, "ok_vec_foreach_rev");
+
+    // ok_vec_foreach_rev: No curly braces
+    sum = 0;
+    ok_vec_foreach_rev(&vec, int value)
+        sum += value;
+    ok_assert(sum == 60, "ok_vec_foreach_rev without curly braces");
+
+    // ok_vec_foreach_rev: Break
+    i = 0;
+    sum = 0;
+    ok_vec_foreach_rev(&vec, int value) {
+        sum += value;
+        if (i == 1) {
+            break;
+        }
+        i++;
+    }
+    ok_assert(sum == 50, "ok_vec_foreach_rev with break");
+
+    // ok_vec_foreach_rev: Inner loop
+    sum = 0;
+    ok_vec_foreach_rev(&vec, int value) {
+        sum += value;
+        ok_vec_foreach_rev(&vec, int value2) {
+            sum += value2;
+        }
+        sum -= 60;
+    }
+    ok_assert(sum == 60, "ok_vec_foreach_rev with inner loop");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     // ok_vec_foreach_ptr
     sum = 0;
     ok_vec_foreach_ptr(&vec, int *value) {
@@ -218,6 +256,57 @@ static void test_vec(void) {
     }
     ok_assert(ok_vec_get(&vec, 0) == 0 && ok_vec_get(&vec, 1) == 10 && ok_vec_get(&vec, 2) == 20,
               "ok_vec_foreach_ptr: set values");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    *ok_vec_get_ptr(&vec, 0) = 10;
+    *ok_vec_get_ptr(&vec, 1) = 20;
+    *ok_vec_get_ptr(&vec, 2) = 30;
+
+    // ok_vec_foreach_ptr_rev
+    sum = 0;
+    ok_vec_foreach_ptr_rev(&vec, int *value) {
+        sum += *value;
+    }
+    ok_assert(sum == 60, "ok_vec_foreach_ptr_rev");
+
+    // ok_vec_foreach_ptr_rev: No curly braces
+    sum = 0;
+    ok_vec_foreach_ptr_rev(&vec, int *value)
+        sum += *value;
+    ok_assert(sum == 60, "ok_vec_foreach_ptr_rev without curly braces");
+
+    // ok_vec_foreach_ptr_rev: Break
+    i = 0;
+    sum = 0;
+    ok_vec_foreach_ptr_rev(&vec, int *value) {
+        sum += *value;
+        if (i == 1) {
+            break;
+        }
+        i++;
+    }
+    ok_assert(sum == 50, "ok_vec_foreach_ptr_rev with break");
+
+    // ok_vec_foreach_ptr_rev: Inner loop
+    sum = 0;
+    ok_vec_foreach_ptr_rev(&vec, int *value) {
+        sum += *value;
+        ok_vec_foreach_ptr_rev(&vec, int *value2) {
+            sum += *value2;
+        }
+        sum -= 60;
+    }
+    ok_assert(sum == 60, "ok_vec_foreach_ptr_rev with inner loop");
+
+    // ok_vec_foreach_ptr_rev: set values
+    i = 0;
+    ok_vec_foreach_ptr_rev(&vec, int *value) {
+        *value = i;
+        i += 10;
+    }
+    ok_assert(ok_vec_get(&vec, 0) == 20 && ok_vec_get(&vec, 1) == 10 && ok_vec_get(&vec, 2) == 0,
+              "ok_vec_foreach_ptr_rev: set values");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
