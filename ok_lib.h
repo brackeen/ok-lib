@@ -533,8 +533,8 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
     memset((map), 0, sizeof(*(map))), \
     (map)->key_hash_func = hash_func, \
     (((map)->m = _ok_map_create(capacity, equals_func, \
-                                (size_t)ok_ptr_diff(&(map)->entry.k, &(map)->entry), \
-                                (size_t)ok_ptr_diff(&(map)->entry.v, &(map)->entry), \
+                                ok_offsetof(&(map)->entry, &(map)->entry.k), \
+                                ok_offsetof(&(map)->entry, &(map)->entry.v), \
                                 sizeof((map)->entry))) != NULL) \
 )
 
@@ -829,8 +829,8 @@ OK_LIB_API bool ok_str_equals(const void *a, const void *b);
 
 // @cond private
 
-#define ok_ptr_offset(ptr, offset) ((uint8_t *)(ptr) + (offset))
-#define ok_ptr_diff(ptr, base_ptr) ((uint8_t *)(ptr) - (uint8_t *)(base_ptr))
+#define ok_ptr_inc(ptr, offset) ((uint8_t *)(ptr) + (offset))
+#define ok_offsetof(base_ptr, ptr) ((size_t)((uint8_t *)(ptr) - (uint8_t *)(base_ptr)))
 
 struct _ok_map;
 
@@ -1018,7 +1018,7 @@ OK_LIB_API bool _ok_vec_realloc(void **values, size_t min_capacity,
 }
 
 OK_LIB_API size_t _ok_vec_index_of(void *values, void *value, size_t element_size, size_t count) {
-    for (size_t i = 0; i < count; i++, values = ok_ptr_offset(values, element_size)) {
+    for (size_t i = 0; i < count; i++, values = ok_ptr_inc(values, element_size)) {
         if (memcmp(values, value, element_size) == 0) {
             return i;
         }
@@ -1117,10 +1117,10 @@ static void *_ok_map_find_entry(const struct _ok_map *map, const void *key,
     ok_hash_t hash = key_hash | OK_MAP_OCCUPIED_FLAG;
     size_t bucket_index = (size_t)(hash & map->capacity_mask);
     while (true) {
-        void *bucket = ok_ptr_offset(map->buckets, bucket_index * map->bucket_stride);
+        void *bucket = ok_ptr_inc(map->buckets, bucket_index * map->bucket_stride);
         ok_hash_t flags_hash = *(ok_hash_t *)(bucket);
         if (hash == flags_hash &&
-            map->key_equals_func(ok_ptr_offset(bucket, map->key_offset), key)) {
+            map->key_equals_func(ok_ptr_inc(bucket, map->key_offset), key)) {
             return bucket;
         } else if ((flags_hash & OK_MAP_OCCUPIED_FLAG) == 0) {
             if (empty_entry) {
@@ -1153,7 +1153,7 @@ static void *_ok_map_find_or_put_entry(struct _ok_map **map, const void *key,
             entry = new_entry;
             key_hash |= OK_MAP_OCCUPIED_FLAG;
             memcpy(entry, &key_hash, sizeof(ok_hash_t));
-            memcpy(ok_ptr_offset(entry, (*map)->key_offset), key, key_size);
+            memcpy(ok_ptr_inc(entry, (*map)->key_offset), key, key_size);
             (*map)->count++;
         }
     }
@@ -1200,7 +1200,7 @@ OK_LIB_API bool _ok_map_put(struct _ok_map **map, const void *key,
                             const void *value, size_t value_size) {
     void *entry = _ok_map_find_or_put_entry(map, key, key_size, key_hash, value_size);
     if (entry) {
-        memcpy(ok_ptr_offset(entry, (*map)->value_offset), value, value_size);
+        memcpy(ok_ptr_inc(entry, (*map)->value_offset), value, value_size);
         return true;
     } else {
         return false;
@@ -1212,7 +1212,7 @@ OK_LIB_API void _ok_map_put_and_get_ptr(struct _ok_map **map, const void *key,
                                         void **value_ptr, size_t value_size) {
     void *entry = _ok_map_find_or_put_entry(map, key, key_size, key_hash, value_size);
     if (entry) {
-        *value_ptr = ok_ptr_offset(entry, (*map)->value_offset);
+        *value_ptr = ok_ptr_inc(entry, (*map)->value_offset);
     } else {
         *value_ptr = NULL;
     }
@@ -1226,18 +1226,18 @@ OK_LIB_API bool _ok_map_put_all(struct _ok_map **map,
     }
 
     void *iterator = from_map->buckets;
-    void *end = ok_ptr_offset(from_map->buckets, (from_map->bucket_stride << from_map->capacity_n));
+    void *end = ok_ptr_inc(from_map->buckets, (from_map->bucket_stride << from_map->capacity_n));
     while (iterator < end) {
         ok_hash_t flags_hash = *(ok_hash_t *)(iterator);
         if (flags_hash & OK_MAP_OCCUPIED_FLAG) {
-            void *key = ok_ptr_offset(iterator, from_map->key_offset);
-            void *value = ok_ptr_offset(iterator, from_map->value_offset);
+            void *key = ok_ptr_inc(iterator, from_map->key_offset);
+            void *value = ok_ptr_inc(iterator, from_map->value_offset);
             bool success = _ok_map_put(map, key, key_size, flags_hash, value, value_size);
             if (!success) {
                 return false;
             }
         }
-        iterator = ok_ptr_offset(iterator, from_map->bucket_stride);
+        iterator = ok_ptr_inc(iterator, from_map->bucket_stride);
     }
     return true;
 }
@@ -1246,7 +1246,7 @@ OK_LIB_API void _ok_map_get(const struct _ok_map *map, const void *key,
                             ok_hash_t key_hash, void *value, size_t value_size) {
     void *entry = _ok_map_find_entry(map, key, key_hash, NULL);
     if (entry) {
-        memcpy(value, ok_ptr_offset(entry, map->value_offset), value_size);
+        memcpy(value, ok_ptr_inc(entry, map->value_offset), value_size);
     } else {
         memset(value, 0, value_size);
     }
@@ -1256,7 +1256,7 @@ OK_LIB_API void _ok_map_get_ptr(const struct _ok_map *map, const void *key,
                                 ok_hash_t key_hash, void **value_ptr) {
     void *entry = _ok_map_find_entry(map, key, key_hash, NULL);
     if (entry) {
-        *value_ptr = ok_ptr_offset(entry, map->value_offset);
+        *value_ptr = ok_ptr_inc(entry, map->value_offset);
     } else {
         *value_ptr = NULL;
     }
@@ -1268,19 +1268,19 @@ OK_LIB_API void *_ok_map_next(const struct _ok_map *map, void *iterator, void *k
         return NULL;
     }
     void *begin = map->buckets;
-    void *end = ok_ptr_offset(map->buckets, (map->bucket_stride << map->capacity_n));
+    void *end = ok_ptr_inc(map->buckets, (map->bucket_stride << map->capacity_n));
     if (!iterator) {
         iterator = map->buckets;
     }
     while (iterator >= begin && iterator < end) {
         ok_hash_t flags_hash = *(ok_hash_t *)(iterator);
-        void *next_iterator = ok_ptr_offset(iterator, map->bucket_stride);
+        void *next_iterator = ok_ptr_inc(iterator, map->bucket_stride);
         if (flags_hash & OK_MAP_OCCUPIED_FLAG) {
             if (key) {
-                memcpy(key, ok_ptr_offset(iterator, map->key_offset), key_size);
+                memcpy(key, ok_ptr_inc(iterator, map->key_offset), key_size);
             }
             if (value) {
-                memcpy(value, ok_ptr_offset(iterator, map->value_offset), value_size);
+                memcpy(value, ok_ptr_inc(iterator, map->value_offset), value_size);
             }
             return next_iterator;
         }
@@ -1297,14 +1297,14 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
     memset(removed_entry, 0, sizeof(ok_hash_t));
     map->count--;
 
-    size_t i = (size_t)ok_ptr_diff(removed_entry, map->buckets) / map->bucket_stride;
+    size_t i = ok_offsetof(map->buckets, removed_entry) / map->bucket_stride;
     size_t j = i;
 
     // NOTE: This only works with linear probing
     const size_t mask = (1 << map->capacity_n) - 1;
     while (true) {
         j = (j + 1) & mask;
-        void *entry = ok_ptr_offset(map->buckets, j * map->bucket_stride);
+        void *entry = ok_ptr_inc(map->buckets, j * map->bucket_stride);
 
         ok_hash_t flags_hash = *(ok_hash_t *)(entry);
         if ((flags_hash & OK_MAP_OCCUPIED_FLAG) == 0) {
