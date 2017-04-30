@@ -129,7 +129,7 @@ static void test_vec(void) {
     ok_assert(ok_vec_get(&vec, 0) == 10 && ok_vec_get(&vec, 1) == 20 && ok_vec_get(&vec, 2) == 30,
               "ok_vec_remove / ok_vec_insert_at");
 
-    ok_vec_remove_at(&vec, ok_vec_index_of(&vec, 30));
+    ok_vec_remove_at(&vec, ok_vec_count(&vec) - 1);
     ok_vec_insert_at(&vec, ok_vec_count(&vec), 30);
     ok_assert(ok_vec_get(&vec, 0) == 10 && ok_vec_get(&vec, 1) == 20 && ok_vec_get(&vec, 2) == 30,
               "ok_vec_remove_at / ok_vec_insert_at end");

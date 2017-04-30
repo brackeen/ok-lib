@@ -87,11 +87,6 @@
 // MARK: Vector
 
 /**
- A value that indicates that a value could not be found.
- */
-static const size_t OK_NOT_FOUND = (~(size_t)0);
-
-/**
  Declares a generic `ok_vec` struct or typedef.
  
  For example, and array of `int`s can be declared as a typedef:
@@ -107,7 +102,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  @return `{ value_type *values; size_t count; size_t capacity; }`
  */
 #define ok_vec_of(value_type) \
-    { value_type *values; size_t count; size_t capacity; value_type _value; }
+    { value_type *values; size_t count; size_t capacity; }
 
 /**
  Inits a vector.
@@ -244,27 +239,12 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
             size_t _i1 = (index); \
             if (_i1 + 1 < (vec)->count) { \
                 memmove((vec)->values + _i1 + 1, (vec)->values + _i1, \
-                        ((vec)->count - _i1 - 1) * sizeof((vec)->_value)); \
+                        ((vec)->count - _i1 - 1) * sizeof(*(vec)->values)); \
             } \
             (vec)->values[_i1] = (value); \
             (vec)->count++; \
         } \
     } while (0)
-
-/**
- Gets the index of the first element that equals the specified value.
- 
- This function uses `memcmp` to test for equality, which may fail if values are structs with
- padding.
-
- @param vec Pointer to the vector.
- @param value The value to find.
- @return `size_t` the index of the value in the vector, or #OK_NOT_FOUND if not found.
- */
-#define ok_vec_index_of(vec, value) ( \
-    (vec)->_value = value, \
-    _ok_vec_index_of((vec)->values, &(vec)->_value, sizeof((vec)->_value), (vec)->count) \
-)
 
 /**
  Removes an element at the specified location in the vector.
@@ -278,7 +258,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
         size_t _i2 = (index); \
         if (_i2 + 1 < (vec)->count) { \
             memmove((vec)->values + _i2, (vec)->values + _i2 + 1, \
-                    ((vec)->count - _i2 - 1) * sizeof((vec)->_value)); \
+                    ((vec)->count - _i2 - 1) * sizeof(*(vec)->values)); \
         } \
         if ((vec)->count > 0) { \
             (vec)->count--; \
@@ -288,17 +268,19 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 /**
  Removes the first element in the vector that equals the specified value.
 
- This function uses `memcmp` to test for equality, which may fail if values are structs with
- padding.
+ This function uses the equality operator `==` to test for equal values, which will fail to 
+ compile if values are structs.
 
  @param vec Pointer to the vector.
  @param value The value to find and remove.
  */
 #define ok_vec_remove(vec, value) \
     do { \
-        size_t _i3 = ok_vec_index_of(vec, value); \
-        if (_i3 != OK_NOT_FOUND) { \
-            ok_vec_remove_at(vec, _i3); \
+        for (size_t _i3 = 0; _i3 < (vec)->count; _i3++) { \
+            if ((vec)->values[_i3] == (value)) { \
+                ok_vec_remove_at(vec, _i3); \
+                break; \
+            } \
         } \
     } while (0)
 
@@ -839,8 +821,6 @@ struct _ok_map;
 OK_LIB_API bool _ok_vec_realloc(void **values, size_t min_capacity, size_t element_size,
                                 size_t *capacity);
 
-OK_LIB_API size_t _ok_vec_index_of(void *values, void *value, size_t element_size, size_t count);
-
 OK_LIB_API struct _ok_map *_ok_map_create(size_t initial_capacity,
                                           bool (*key_equals_func)(const void *key1,
                                                                   const void *key2),
@@ -1017,15 +997,6 @@ OK_LIB_API bool _ok_vec_realloc(void **values, size_t min_capacity,
     } else {
         return false;
     }
-}
-
-OK_LIB_API size_t _ok_vec_index_of(void *values, void *value, size_t element_size, size_t count) {
-    for (size_t i = 0; i < count; i++, values = ok_ptr_inc(values, element_size)) {
-        if (memcmp(values, value, element_size) == 0) {
-            return i;
-        }
-    }
-    return OK_NOT_FOUND;
 }
 
 // MARK: Implementation Private map functions
