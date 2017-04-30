@@ -107,7 +107,7 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  @return `{ value_type *values; size_t count; size_t capacity; }`
  */
 #define ok_vec_of(value_type) \
-    { value_type *values; size_t count; size_t capacity; size_t _index; value_type _value; }
+    { value_type *values; size_t count; size_t capacity; value_type _value; }
 
 /**
  Inits a vector.
@@ -237,20 +237,19 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  @param index `size_t` The index at which to insert the element. If the index is greater than or
  equal to number of elements in the vector, the value is added to the end, like #ok_vec_push().
  @param value The value to insert.
- @return `true` if the value was successfully inserted into the vector, `false` otherwise (out of 
- memory error).
  */
-#define ok_vec_insert_at(vec, index, value) ( \
-    (vec)->_index = (index), \
-    ok_vec_ensure_capacity(vec, 1) ? ( \
-        (((vec)->_index + 1 < (vec)->count) ? \
-            memmove((vec)->values + (vec)->_index + 1, (vec)->values + (vec)->_index, \
-                    ((vec)->count - (vec)->_index - 1) * sizeof((vec)->_value)) : \
-            NULL), \
-        (vec)->values[(vec)->_index] = (value), \
-        (vec)->count++, \
-        true) : false \
-)
+#define ok_vec_insert_at(vec, index, value) \
+    do { \
+        if (ok_vec_ensure_capacity(vec, 1)) { \
+            size_t _i1 = (index); \
+            if (_i1 + 1 < (vec)->count) { \
+                memmove((vec)->values + _i1 + 1, (vec)->values + _i1, \
+                        ((vec)->count - _i1 - 1) * sizeof((vec)->_value)); \
+            } \
+            (vec)->values[_i1] = (value); \
+            (vec)->count++; \
+        } \
+    } while (0)
 
 /**
  Gets the index of the first element that equals the specified value.
@@ -273,16 +272,18 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
  @param vec Pointer to the vector.
  @param index `size_t` The index of the element to remove. If the index is greater than or
  equal to number of elements in the vector, the size of the vector is reduced by one.
- @return The new size of the vector.
  */
-#define ok_vec_remove_at(vec, index) ( \
-    (vec)->_index = (index), \
-    (((vec)->_index + 1 < (vec)->count) ? \
-        memmove((vec)->values + (vec)->_index, (vec)->values + (vec)->_index + 1, \
-                ((vec)->count - (vec)->_index - 1) * sizeof((vec)->_value)) : \
-        NULL), \
-    ((vec)->count > 0 ? (vec)->count-- : 0) \
-)
+#define ok_vec_remove_at(vec, index) \
+    do { \
+        size_t _i2 = (index); \
+        if (_i2 + 1 < (vec)->count) { \
+            memmove((vec)->values + _i2, (vec)->values + _i2 + 1, \
+                    ((vec)->count - _i2 - 1) * sizeof((vec)->_value)); \
+        } \
+        if ((vec)->count > 0) { \
+            (vec)->count--; \
+        } \
+    } while (0)
 
 /**
  Removes the first element in the vector that equals the specified value.
@@ -292,13 +293,14 @@ static const size_t OK_NOT_FOUND = (~(size_t)0);
 
  @param vec Pointer to the vector.
  @param value The value to find and remove.
- @return `size_t` the index of the removed element, or #OK_NOT_FOUND if not found.
  */
-#define ok_vec_remove(vec, value) ( \
-    (vec)->_index = ok_vec_index_of(vec, value), \
-    (((vec)->_index != OK_NOT_FOUND) ? ok_vec_remove_at(vec, (vec)->_index) : 0),  \
-    (vec)->_index \
-)
+#define ok_vec_remove(vec, value) \
+    do { \
+        size_t _i3 = ok_vec_index_of(vec, value); \
+        if (_i3 != OK_NOT_FOUND) { \
+            ok_vec_remove_at(vec, _i3); \
+        } \
+    } while (0)
 
 /**
  Foreach macro that iterates over the values in the vector.
