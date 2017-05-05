@@ -613,6 +613,23 @@ static void test_map(void) {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    // Pointers as keys
+
+    const void *key1 = "hello";
+    const void *key2 = NULL;
+
+    struct void_map_s ok_map_of(const void *, int);
+    struct void_map_s void_map;
+    ok_map_init_custom(&void_map, ok_const_ptr_hash, ok_ptr_equals);
+    ok_map_put(&void_map, key1, 1);
+    ok_map_put(&void_map, key2, 2);
+    ok_assert(ok_map_get(&void_map, key1) == 1, "pointer keys");
+    ok_assert(ok_map_get(&void_map, key2) == 2, "pointer keys");
+
+    ok_map_deinit(&void_map);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
     // Bad hash function
 
     struct int_map_s bad_map;

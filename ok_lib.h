@@ -720,7 +720,9 @@ typedef uint32_t ok_hash_t;
        float        : ok_float_hash, \
        double       : ok_double_hash, \
        char *       : ok_str_hash, \
-       const char * : ok_const_str_hash)
+       const char * : ok_const_str_hash, \
+       void *       : ok_ptr_hash, \
+       const void * : ok_const_ptr_hash)
 #  else
 // Force compile error if type is not 'char *`
 #    define ok_default_hash(key) (ok_static_assert(sizeof(_ok_is_char(*key)) == sizeof(bool) && \
@@ -945,6 +947,22 @@ OK_LIB_API ok_hash_t ok_str_hash(char *key) {
     return ok_const_str_hash(key);
 }
 
+OK_LIB_API ok_hash_t ok_const_ptr_hash(const void *key) {
+    if (sizeof(void *) == sizeof(uint32_t)) {
+        return ok_uint32_hash(*(uint32_t *)&key);
+    } else if (sizeof(void *) == sizeof(uint64_t)) {
+        return ok_uint64_hash(*(uint64_t *)&key);
+    } else {
+        ok_static_assert(sizeof(void *) == sizeof(uint32_t) || sizeof(void *) == sizeof(uint64_t),
+                         "Unknown pointer size");
+        return 0;
+    }
+}
+
+OK_LIB_API ok_hash_t ok_ptr_hash(void *key) {
+    return ok_const_ptr_hash(key);
+}
+
 OK_LIB_API ok_hash_t ok_hash_combine(ok_hash_t hash_a, ok_hash_t hash_b) {
     return hash_a ^ (hash_b + 0x9e3779b9 + (hash_a << 6) + (hash_a >> 2));
 }
@@ -980,6 +998,12 @@ OK_LIB_API bool ok_str_equals(const void *a, const void *b) {
     const char *str2 = *(const char * const *)b;
 
     return strcmp(str1, str2) == 0;
+}
+
+OK_LIB_API bool ok_ptr_equals(const void *v1, const void *v2) {
+    const void *a = *(const void * const *)v1;
+    const void *b = *(const void * const *)v2;
+    return a == b;
 }
 
 // MARK: Implementation: Private vector functions
