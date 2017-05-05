@@ -948,15 +948,14 @@ OK_LIB_API ok_hash_t ok_str_hash(char *key) {
 }
 
 OK_LIB_API ok_hash_t ok_const_ptr_hash(const void *key) {
-    if (sizeof(void *) == sizeof(uint32_t)) {
-        return ok_uint32_hash(*(uint32_t *)&key);
-    } else if (sizeof(void *) == sizeof(uint64_t)) {
-        return ok_uint64_hash(*(uint64_t *)&key);
-    } else {
-        ok_static_assert(sizeof(void *) == sizeof(uint32_t) || sizeof(void *) == sizeof(uint64_t),
-                         "Unknown pointer size");
-        return 0;
-    }
+#if UINTPTR_MAX == UINT32_MAX
+    return ok_uint32_hash(*(uint32_t *)&key);
+#elif UINTPTR_MAX == UINT64_MAX
+    return ok_uint64_hash(*(uint64_t *)&key);
+#else
+    ok_static_assert(false, "Unknown pointer size");
+    return 0;
+#endif
 }
 
 OK_LIB_API ok_hash_t ok_ptr_hash(void *key) {
