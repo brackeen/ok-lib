@@ -111,6 +111,3 @@ Valgrind is used on macOS and Linux if available - tests fail if there are memor
 * [More examples](extras/example)
 * [C++ wrapper](extras/wrapper)
 * [Tests](extras/test)
-
-## License
-[ZLIB](http://en.wikipedia.org/wiki/Zlib_License)
