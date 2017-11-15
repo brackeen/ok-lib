@@ -556,7 +556,7 @@ static void test_map(void) {
     // On C11, you can use `ok_map_init(&int_map)` instead
     ok_map_init_custom(&int_map, ok_int32_hash, ok_32bit_equals);
     for (int i = 0; i <= 9999; i++) {
-        char *value = malloc(5);
+        char *value = (char *)malloc(5);
         snprintf(value, 5, "%d", i);
         ok_map_put(&int_map, i, value);
     }
@@ -583,7 +583,9 @@ static void test_map(void) {
     struct str_point_map_s str_point_map;
     ok_map_init(&str_point_map);
 
-    point_t p = {.x = 100.0f, .y = 200.0f};
+    point_t p;
+    p.x = 100.0f;
+    p.y = 200.0f;
     ok_map_put(&str_point_map, "player1", p);
     point_t p2 = ok_map_get(&str_point_map, "player1");
     ok_assert(point_equals(&p, &p2), "struct values");
@@ -635,7 +637,7 @@ static void test_map(void) {
     struct int_map_s bad_map;
     ok_map_init_custom(&bad_map, bad_hash, ok_32bit_equals);
     for (int i = 0; i <= 9999; i++) {
-        char *value = malloc(5);
+        char *value = (char *)malloc(5);
         snprintf(value, 5, "%d", i);
         ok_map_put(&bad_map, i, value);
     }
