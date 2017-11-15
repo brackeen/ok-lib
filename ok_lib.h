@@ -303,8 +303,8 @@
  @param var   The value type and name.
  */
 #define ok_vec_foreach(vec, var) \
-    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
-    for (var = *((vec)->values + _i); _keep; _keep = !_keep)
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = 1 - _keep, _i++) \
+    for (var = *((vec)->values + _i); _keep; _keep = 1 - _keep)
 
 /**
  Foreach macro that iterates over the values in the vector, in reverse order.
@@ -324,8 +324,8 @@
  @param var   The value type and name.
  */
 #define ok_vec_foreach_rev(vec, var) \
-    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
-    for (var = *((vec)->values + (_len - _i - 1)); _keep; _keep = !_keep)
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = 1 - _keep, _i++) \
+    for (var = *((vec)->values + (_len - _i - 1)); _keep; _keep = 1 - _keep)
 
 /**
  Foreach macro that iterates over pointers to the values in the vector.
@@ -345,8 +345,8 @@
  @param var   The value type and name.
  */
 #define ok_vec_foreach_ptr(vec, var) \
-    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
-    for (var = (vec)->values + _i; _keep; _keep = !_keep)
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = 1 - _keep, _i++) \
+    for (var = (vec)->values + _i; _keep; _keep = 1 - _keep)
 
 /**
  Foreach macro that iterates over pointers to the values in the vector.
@@ -366,8 +366,8 @@
  @param var   The value type and name.
  */
 #define ok_vec_foreach_ptr_rev(vec, var) \
-    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = !_keep, _i++) \
-    for (var = (vec)->values + (_len - _i - 1); _keep; _keep = !_keep)
+    for (size_t _keep = 1, _i = 0, _len = (vec)->count; _keep && _i < _len; _keep = 1 - _keep, _i++) \
+    for (var = (vec)->values + (_len - _i - 1); _keep; _keep = 1 - _keep)
 
 /**
  Applies a function to each element in a vector.
@@ -693,13 +693,13 @@
  @param value_var The value type and name.
  */
 #define ok_map_foreach(map, key_var, value_var) \
-    for (uint8_t _keep = 1, _keep2 = true, *_i = NULL; _keep && \
-        ((_i = (uint8_t *)_ok_map_next((map)->m, _i, (void *)&(map)->entry.k, \
-                                       sizeof((map)->entry.k), (void *)&(map)->entry.v, \
-                                       sizeof((map)->entry.v))) != NULL); \
-        _keep = !_keep, _keep2 = !_keep2) \
-    for (key_var = (map)->entry.k; _keep && _keep2; _keep2 = !_keep2) \
-    for (value_var = (map)->entry.v; _keep; _keep = !_keep)
+    for (uintptr_t _keep = 1, _keep2 = 1, *_i = NULL; _keep && \
+        ((_i = (uintptr_t *)_ok_map_next((map)->m, _i, (void *)&(map)->entry.k, \
+                                         sizeof((map)->entry.k), (void *)&(map)->entry.v, \
+                                         sizeof((map)->entry.v))) != NULL); \
+        _keep = 1 - _keep, _keep2 = 1 - _keep2) \
+    for (key_var = (map)->entry.k; _keep && _keep2; _keep2 = 1 - _keep2) \
+    for (value_var = (map)->entry.v; _keep; _keep = 1 - _keep)
 
 // MARK: Declarations: Hash functions
 
@@ -867,9 +867,12 @@ OK_LIB_API void *_ok_map_next(const struct _ok_map *map, void *iterator, void *k
 
 #ifdef OK_LIB_DEFINE
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
+#if defined(__GNUC__)
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#elif defined (_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable:4505)
 #endif
 
 // Hash functions from Wang http://www.cris.com/~Ttwang/tech/inthash.htm
@@ -1068,7 +1071,7 @@ static struct _ok_map *_ok_map_init(struct _ok_map *map, size_t initial_capacity
     while ((1u << capacity_n) < initial_capacity) {
         capacity_n++;
     }
-    size_t capacity = (1 << capacity_n);
+    size_t capacity = (1u << capacity_n);
 
     map->buckets = calloc(capacity, map->bucket_stride);
     if (map->buckets) {
@@ -1136,7 +1139,7 @@ static void *_ok_map_find_or_put_entry(struct _ok_map **map, const void *key,
     if (!entry) {
         // Grow
         if ((*map)->count >= (*map)->max_count) {
-            struct _ok_map *new_map = _ok_map_copy(*map, (1 << ((*map)->capacity_n + 1)),
+            struct _ok_map *new_map = _ok_map_copy(*map, (1u << ((*map)->capacity_n + 1)),
                                                      key_size, value_size);
             if (!new_map) {
                 return NULL;
@@ -1298,7 +1301,7 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
     size_t j = i;
 
     // NOTE: This only works with linear probing
-    const size_t mask = (1 << map->capacity_n) - 1;
+    const size_t mask = (1u << map->capacity_n) - 1u;
     while (true) {
         j = (j + 1) & mask;
         void *entry = ok_ptr_inc(map->buckets, j * map->bucket_stride);
@@ -1318,8 +1321,10 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
     return true;
 }
 
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
+#if defined(__GNUC__)
+#  pragma GCC diagnostic pop
+#elif defined (_MSC_VER)
+#  pragma warning(pop)
 #endif
 
 #endif // OK_LIB_DEFINE
