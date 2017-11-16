@@ -693,10 +693,10 @@
  @param value_var The value type and name.
  */
 #define ok_map_foreach(map, key_var, value_var) \
-    for (uintptr_t _keep = 1, _keep2 = 1, *_i = NULL; _keep && \
-        ((_i = (uintptr_t *)_ok_map_next((map)->m, _i, (void *)&(map)->entry.k, \
-                                         sizeof((map)->entry.k), (void *)&(map)->entry.v, \
-                                         sizeof((map)->entry.v))) != NULL); \
+    for (size_t _keep = 1, _keep2 = 1, *_i = NULL; _keep && \
+        ((_i = (size_t *)_ok_map_next((map)->m, _i, (void *)&(map)->entry.k, \
+                                      sizeof((map)->entry.k), (void *)&(map)->entry.v, \
+                                      sizeof((map)->entry.v))) != NULL); \
         _keep = 1 - _keep, _keep2 = 1 - _keep2) \
     for (key_var = (map)->entry.k; _keep && _keep2; _keep2 = 1 - _keep2) \
     for (value_var = (map)->entry.v; _keep; _keep = 1 - _keep)
