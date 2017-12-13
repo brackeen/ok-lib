@@ -376,8 +376,7 @@ static void test_vec(void) {
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     struct vec_of_strs ok_vec_of(const char *);
-    struct vec_of_strs str_vec;
-    ok_vec_init(&str_vec);
+    struct vec_of_strs str_vec = OK_VEC_INIT;
 
     ok_vec_push(&str_vec, "banana");
     ok_vec_push(&str_vec, "carrot");
@@ -394,8 +393,7 @@ static void test_vec(void) {
 
     typedef struct ok_vec_of(point_t) vec_point_t;
 
-    vec_point_t point_vec;
-    ok_vec_init(&point_vec);
+    vec_point_t point_vec = OK_VEC_INIT;
 
     point_t p0 = {0, 1};
     ok_vec_push(&point_vec, p0);

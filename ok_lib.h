@@ -106,6 +106,16 @@
     { value_type *values; size_t count; size_t capacity; }
 
 /**
+ A macro to initialize a vector statically.
+
+     typedef struct ok_vec_of(int) vec_int_t;
+     vec_int_t int_vec = OK_VEC_INIT;
+
+ When finished using the vector, the #ok_vec_deinit() function must be called.
+ */
+#define OK_VEC_INIT { 0 }
+
+/**
  Inits a vector.
  
  When finished using the vector, the #ok_vec_deinit() function must be called.
