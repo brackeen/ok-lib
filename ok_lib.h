@@ -113,7 +113,7 @@
 
  When finished using the vector, the #ok_vec_deinit() function must be called.
  */
-#define OK_VEC_INIT { 0 }
+#define OK_VEC_INIT { NULL, 0, 0 }
 
 /**
  Inits a vector.
