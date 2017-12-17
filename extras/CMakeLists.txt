@@ -42,8 +42,8 @@ elseif (CMAKE_C_COMPILER_ID MATCHES "GNU")
   # Disable unused-functions because of this GCC bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64079
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Wwrite-strings -Wno-unused-function ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
 elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
-  # Disable 'shadow variables' and 'function not inlined'
-  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
+  # Disable 'shadow variables', 'function not inlined', and 'struct padding'
+  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 /wd4820 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
 endif()
 
 # CTest setup, using valgrind if found
