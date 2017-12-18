@@ -662,6 +662,167 @@ static void test_map(void) {
 
 #if !defined(__EMSCRIPTEN__)
 
+#if !defined(_WIN32)
+#include <pthread.h>
+#include <unistd.h>
+#define THREAD_RETURN_VALUE void *
+#else
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+typedef HANDLE pthread_t;
+
+#define THREAD_RETURN_VALUE DWORD WINAPI
+
+static inline int usleep(unsigned long useconds) {
+    Sleep(useconds / 1000);
+    return 0;
+}
+
+static int pthread_create(HANDLE *thread, const void *attr,
+                          LPTHREAD_START_ROUTINE start_routine, void *arg) {
+    (void)attr;
+    *thread = CreateThread(NULL, 0, start_routine, arg, 0, NULL);
+    return (*thread == NULL);
+}
+
+static int pthread_join(HANDLE thread, void **value_ptr) {
+    (void)value_ptr;
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    return 0;
+}
+
+#endif // _WIN32
+
+#define PRODUCER_THREAD_COUNT 8
+#define CONSUMER_THREAD_COUNT 8
+#define VALUE_COUNT 50000
+
+typedef long datatype;
+
+typedef struct ok_queue_of(datatype) queue_t;
+
+static int datatype_cmp(const void *v1, const void *v2) {
+    const datatype a = *(const datatype *)v1;
+    const datatype b = *(const datatype *)v2;
+
+    return (a < b) ? -1 : (a > b);
+}
+
+typedef struct {
+    pthread_t thread;
+    queue_t *queue1;
+    queue_t *queue2;
+    datatype value;
+} thread_context;
+
+static _Atomic(bool) production_complete = false;
+
+static THREAD_RETURN_VALUE producer_thread_entry(void *context) {
+    thread_context *c = context;
+    datatype value = c->value;
+    for (int i = 0; i < VALUE_COUNT; i++) {
+        if ((i % 100) == 0) {
+            usleep(1000);
+        }
+        ok_queue_push(c->queue1, value);
+        value++;
+    }
+    return 0;
+}
+
+static THREAD_RETURN_VALUE consumer_thread_entry(void *context) {
+    thread_context *c = context;
+    while (1) {
+        datatype value;
+        if (ok_queue_pop(c->queue1, &value)) {
+            ok_queue_push(c->queue2, value);
+        } else if (atomic_load(&production_complete)) {
+            break;
+        } else {
+            usleep(1000);
+        }
+    }
+    return 0;
+}
+
+static void test_queue_multithreaded(void) {
+    thread_context producer_thread_contexts[PRODUCER_THREAD_COUNT];
+    thread_context consumer_thread_contexts[CONSUMER_THREAD_COUNT];
+
+    queue_t queue1 = OK_QUEUE_INIT;
+    queue_t queue2;
+    ok_queue_init(&queue2);
+
+    // Start producer threads
+    for (int i = 0; i < PRODUCER_THREAD_COUNT; i++) {
+        producer_thread_contexts[i].queue1 = &queue1;
+        producer_thread_contexts[i].value = 1 + i * VALUE_COUNT;
+        pthread_create(&producer_thread_contexts[i].thread, NULL, producer_thread_entry, &producer_thread_contexts[i]);
+    }
+
+    // Start consumer threads
+    for (int i = 0; i < CONSUMER_THREAD_COUNT; i++) {
+        consumer_thread_contexts[i].queue1 = &queue1;
+        consumer_thread_contexts[i].queue2 = &queue2;
+        consumer_thread_contexts[i].value = i;
+        pthread_create(&consumer_thread_contexts[i].thread, NULL, consumer_thread_entry, &consumer_thread_contexts[i]);
+    }
+
+    // Wait for producers to finish
+    for (int i = 0; i < PRODUCER_THREAD_COUNT; i++) {
+        pthread_join(producer_thread_contexts[i].thread, NULL);
+    }
+    atomic_store(&production_complete, true);
+
+    // Wait for consumers to finish
+    for (int i = 0; i < CONSUMER_THREAD_COUNT; i++) {
+        pthread_join(consumer_thread_contexts[i].thread, NULL);
+    }
+
+    // Check if queue1 is empty
+    datatype value;
+    bool is_empty = !ok_queue_pop(&queue1, &value);
+    ok_assert(is_empty, "queue1 not empty");
+
+    // Make sure queue2 has the values 1..(PRODUCER_THREAD_COUNT * VALUE_COUNT)
+    size_t count = PRODUCER_THREAD_COUNT * VALUE_COUNT;
+    datatype *values = calloc(count, sizeof(datatype));
+    if (!values) {
+        printf("Error: Not enough memory");
+        return;
+    }
+    bool prematurely_empty = false;
+    for (size_t i = 0; i < count; i++) {
+        datatype value;
+        if (!ok_queue_pop(&queue2, &value)) {
+            prematurely_empty = true;
+            break;
+        }
+        values[i] = value;
+    }
+    ok_assert(!prematurely_empty, "queue2 not full");
+
+    is_empty = !ok_queue_pop(&queue2, &value);
+    ok_assert(is_empty, "queue2 not empty");
+
+    bool values_valid = true;
+    qsort((void *)values, count, sizeof(*values), datatype_cmp);
+    for (size_t i = 0; i < count; i++) {
+        if (values[i] != (datatype)(i + 1)) {
+            values_valid = false;
+            break;
+        }
+    }
+
+    ok_assert(values_valid, "queue2 has incorrect values");
+
+    free(values);
+    ok_queue_deinit(&queue1);
+    ok_queue_deinit(&queue2);
+}
+
 static void str_deallocator(void *value_ptr) {
     char *str = *(char **)value_ptr;
     //printf("Deallocating: %s\n", str);
@@ -734,6 +895,8 @@ static void test_queue(void) {
     }
     ok_assert(success, "point queue error");
     ok_queue_deinit(&point_queue);
+
+    test_queue_multithreaded();
 }
 
 #else

@@ -38,9 +38,11 @@ add_executable(ok-lib-test ../ok_lib.h ${test_files})
 if (CMAKE_C_COMPILER_ID MATCHES "Clang")
   # Enable -Wwrite-strings because -Weverything doesn't enable it in all versions of Clang
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "-Weverything -Wwrite-strings -Wno-padded ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
+  target_link_libraries(ok-lib-test pthread)
 elseif (CMAKE_C_COMPILER_ID MATCHES "GNU")
   # Disable unused-functions because of this GCC bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64079
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Wwrite-strings -Wno-unused-function ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
+  target_link_libraries(ok-lib-test pthread)
 elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
   # Disable 'shadow variables', 'function not inlined', and 'struct padding'
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 /wd4820 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
