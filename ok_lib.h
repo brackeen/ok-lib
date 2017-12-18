@@ -765,6 +765,9 @@
 
  To init a queue with a custom minimum capacity, use #ok_queue_init_with_capacity() instead.
 
+ This function is not thread safe. If two threads attempt to init a queue at the same time, the
+ result is undefined.
+
  When finished using the queue, the #ok_queue_deinit() function must be called.
 
  @tparam queue Pointer to the queue.
@@ -775,6 +778,9 @@
 /**
  Inits a queue with a custom minimum capacity. The queue may grow in size larger than the specified
  capacity.
+
+ This function is not thread safe. If two threads attempt to init a queue at the same time, the
+ result is undefined.
 
  When finished using the queue, the #ok_queue_deinit() function must be called.
 
