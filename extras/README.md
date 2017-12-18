@@ -11,6 +11,14 @@ mkdir tmp && cd tmp && cmake .. && cmake --build . && ctest --verbose; cd .. && 
 mkdir tmp | Out-Null; if($?) { cd tmp }; if($?) { cmake .. }; if($?) { cmake --build . }; if($?) { ctest -C Debug --verbose }; cd .. ; rm -r tmp
 ```
 
+## Test (Emscripten)
+
+Assuming `EMSCRIPTEN_ROOT_PATH` points to active installed version of Emscripten.
+
+```
+mkdir tmp && cd tmp && cmake -DCMAKE_TOOLCHAIN_FILE=$EMSCRIPTEN_ROOT_PATH/cmake/Modules/Platform/Emscripten.cmake .. && cmake --build . && node ok-lib-test.js && cd .. && rm -Rf tmp
+```
+
 ## Generate Xcode project
 ```
 mkdir build && cd build && cmake -G Xcode ..
