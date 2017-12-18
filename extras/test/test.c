@@ -13,6 +13,7 @@
 #endif
 #ifdef WIN32
 #define strcat(dest, src) strcat_s(dest, sizeof(dest), src)
+#define strdup(str) _strdup(str)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -655,6 +656,84 @@ static void test_map(void) {
     ok_map_deinit(&bad_map);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// MARK: Test queue
+
+static void str_deallocator(void *value_ptr) {
+    char *str = *(char **)value_ptr;
+    //printf("Deallocating: %s\n", str);
+    free(str);
+}
+
+static void test_queue(void) {
+    typedef struct ok_queue_of(int) queue_int_t;
+
+    int count = 100;
+    bool success = false;
+
+    queue_int_t queue;
+    ok_queue_init(&queue);
+    int int_value = 0;
+    for (int i = 0; i < count; i++) {
+        ok_queue_push(&queue, i);
+    }
+    for (int i = 0; i < count; i++) {
+        success = ok_queue_pop(&queue, &int_value);
+        if (!success || int_value != i) {
+            success = false;
+            break;
+        }
+    }
+    ok_assert(success, "int queue error");
+    ok_assert(ok_queue_pop(&queue, &int_value) == false, "int queue not empty");
+
+    success = false;
+    for (int i = 0; i < count; i++) {
+        ok_queue_push(&queue, i);
+        success = ok_queue_pop(&queue, &int_value);
+        if (!success || int_value != i) {
+            success = false;
+            break;
+        }
+    }
+    ok_assert(success, "int queue error (size 1)");
+    ok_assert(ok_queue_pop(&queue, &int_value) == false, "int queue (size 1) not empty");
+    ok_queue_deinit(&queue);
+
+    struct ok_queue_of(char *) str_queue = OK_QUEUE_INIT;
+    char *name = strdup("dave");
+    ok_queue_push(&str_queue, name);
+    name = strdup("mary");
+    ok_queue_push(&str_queue, name);
+    name = strdup("lucy");
+    ok_queue_push(&str_queue, name);
+    ok_queue_deinit_with_deallocator(&str_queue, str_deallocator);
+    ok_assert(true, "queue deallocate test");
+
+    typedef struct ok_queue_of(point_t) queue_point_t;
+    queue_point_t point_queue;
+
+    point_t point_array[3] = {{1, 2}, {3, 4}, {5, 6}};
+    size_t num_points = sizeof(point_array) / sizeof(*point_array);
+
+    success = false;
+    ok_queue_init_with_capacity(&point_queue, 4);
+    for (size_t i = 0; i < num_points; i++) {
+        ok_queue_push(&point_queue, point_array[i]);
+    }
+    for (size_t i = 0; i < num_points; i++) {
+        point_t point = {0, 0};
+        success = ok_queue_pop(&point_queue, &point);
+        if (!success || !point_equals(&point, &point_array[i])) {
+            success = false;
+            break;
+        }
+    }
+    ok_assert(success, "point queue error");
+    ok_queue_deinit(&point_queue);
+}
+
 int main(void) {
     //ok_static_assert(2 + 2 == 5, "2+2 is not 5");
     ok_static_assert(true, "Identifier `true` must be true");
@@ -663,6 +742,7 @@ int main(void) {
 
     test_vec();
     test_map();
+    test_queue();
 
     ok_tests_finish();
 

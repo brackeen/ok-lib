@@ -1,7 +1,6 @@
 #define OK_LIB_DEFINE
 #include "ok_map.h"
 #include <iostream>
-#include <string>
 
 /*
  Example using the C++ wrapper for ok_lib's hashmap.

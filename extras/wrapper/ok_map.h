@@ -10,9 +10,10 @@
 #ifndef OK_MAP_H
 #define OK_MAP_H
 
+#include <string>
+
 #define OK_LIB_DECLARE
 #include "ok_lib.h"
-#include <string>
 
 namespace ok {
     template <typename T> static ok_hash_t hash_func(const T key);
