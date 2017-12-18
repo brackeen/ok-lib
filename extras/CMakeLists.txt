@@ -46,11 +46,13 @@ elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
   set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 /wd4820 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
 endif()
 
-# CTest setup, using valgrind if found
+# CTest setup, using valgrind if found. Do not use valgrind on macOS, which crashes when starting threads
 enable_testing()
-find_program(MEMCHECK_COMMAND valgrind)
-set(MEMCHECK_COMMAND_OPTIONS "--error-exitcode=1" "--leak-check=full")
-if(NOT MEMCHECK_COMMAND)
+if (NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  find_program(MEMCHECK_COMMAND valgrind)
+  set(MEMCHECK_COMMAND_OPTIONS "--error-exitcode=1" "--leak-check=full")
+endif()
+if (NOT MEMCHECK_COMMAND)
   add_test(NAME ok-lib-test COMMAND ok-lib-test)
 else()
   add_test(NAME ok-lib-test-memcheck COMMAND ${MEMCHECK_COMMAND} ${MEMCHECK_COMMAND_OPTIONS} ./ok-lib-test)

@@ -105,7 +105,7 @@ with linear probing and cleanup on deletion (no lazy deletion).
 ## Tests
 The [Tests](extras/test) are run on [Travis CI](https://travis-ci.org/brackeen/ok-lib) (Linux and 
 macOS) and [Appveyor](https://ci.appveyor.com/project/brackeen/ok-lib/branch/master) (Windows). 
-Valgrind is used on macOS and Linux if available - tests fail if there are memory leaks.
+Valgrind is used on Linux if available - tests fail if there are memory leaks.
 
 ## Extras
 * [More examples](extras/example)
