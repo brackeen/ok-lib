@@ -660,6 +660,8 @@ static void test_map(void) {
 
 // MARK: Test queue
 
+#if !defined(__EMSCRIPTEN__)
+
 static void str_deallocator(void *value_ptr) {
     char *str = *(char **)value_ptr;
     //printf("Deallocating: %s\n", str);
@@ -733,6 +735,14 @@ static void test_queue(void) {
     ok_assert(success, "point queue error");
     ok_queue_deinit(&point_queue);
 }
+
+#else
+
+static void test_queue(void) {
+    // Emscripten: Do nothing
+}
+
+#endif // __EMSCRIPTEN__
 
 int main(void) {
     //ok_static_assert(2 + 2 == 5, "2+2 is not 5");

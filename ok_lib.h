@@ -723,6 +723,8 @@
 
 // MARK: Concurrent queue
 
+#if !defined(__EMSCRIPTEN__)
+
 /**
  The default capacity of a queue. This is the minimum capacity; queues can grow in size.
  */
@@ -824,6 +826,8 @@
     (ok_static_assert_types_compatible((queue)->v, *(value_ptr)), 0), \
     _ok_queue_pop(&(queue)->q, sizeof((queue)->v), (value_ptr)) \
 )
+
+#endif // __EMSCRIPTEN__
 
 // MARK: Declarations: Hash functions
 
@@ -989,6 +993,8 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key,
 OK_LIB_API void *_ok_map_next(const struct _ok_map *map, void *iterator, void *key,
                               size_t key_size, void *value, size_t value_size);
 
+#if !defined(__EMSCRIPTEN__)
+
 OK_LIB_API struct _ok_queue_block *_ok_queue_new_block(const struct _ok_queue *queue,
                                                        size_t value_size);
 
@@ -1012,6 +1018,9 @@ OK_LIB_API void _ok_queue_init(struct _ok_queue *queue, size_t value_size, size_
 
 OK_LIB_API void _ok_queue_deinit(struct _ok_queue *queue, size_t value_size,
                                  void (*deallocator)(void *));
+
+#endif // __EMSCRIPTEN__
+
 // MARK: Implementation: Hash functions
 
 #ifdef OK_LIB_DEFINE
@@ -1175,7 +1184,7 @@ OK_LIB_API bool _ok_vec_realloc(void **values, size_t min_capacity,
     }
 }
 
-// MARK: Implementation Private map functions
+// MARK: Implementation: Private map functions
 
 /*
  Hashtable implementation notes:
@@ -1470,7 +1479,9 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
     return true;
 }
 
-// MARK: Implementation Private queue functions
+// MARK: Implementation: Private queue functions
+
+#if !defined(__EMSCRIPTEN__)
 
 /*
  Queue
@@ -1516,7 +1527,7 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
        == *(expected))
 #  define OK_LOCK(lock) do { } while (InterlockedExchange8((char *)(lock), 1))
 #  define OK_UNLOCK(lock) atomic_store((lock), 0)
-#elif __GCC_HAVE_SYNC_COMPARE_AND_SWAP_4
+#elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
 #  define _Atomic(T) T
 #  define atomic_load(object) __atomic_load_n((object), __ATOMIC_SEQ_CST)
 #  define atomic_store(object, desired) __atomic_store_n(object, desired, __ATOMIC_SEQ_CST);
@@ -1710,6 +1721,8 @@ OK_LIB_API void _ok_queue_deinit(struct _ok_queue *queue, size_t value_size,
 
 #undef OK_LOCK
 #undef OK_UNLOCK
+
+#endif // __EMSCRIPTEN__
 
 #if defined(__GNUC__)
 #  pragma GCC diagnostic pop
