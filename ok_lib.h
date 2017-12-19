@@ -1073,8 +1073,10 @@ OK_LIB_API ok_hash_t ok_int32_hash(int32_t key) {
 }
 
 OK_LIB_API ok_hash_t ok_float_hash(float key) {
-    ok_static_assert(sizeof(float) == sizeof(uint32_t), "float must be be 32-bit");
-    return ok_uint32_hash(*(uint32_t *)&key);
+    uint32_t int_key;
+    ok_static_assert(sizeof(key) == sizeof(int_key), "float must be be 32-bit");
+    memcpy(&int_key, &key, sizeof(int_key));
+    return ok_uint32_hash(int_key);
 }
 
 OK_LIB_API ok_hash_t ok_uint64_hash(uint64_t key) {
@@ -1093,8 +1095,10 @@ OK_LIB_API ok_hash_t ok_int64_hash(int64_t key) {
 }
 
 OK_LIB_API ok_hash_t ok_double_hash(double key) {
-    ok_static_assert(sizeof(double) == sizeof(uint64_t), "double must be 64-bit");
-    return ok_uint64_hash(*(uint64_t *)&key);
+    uint64_t int_key;
+    ok_static_assert(sizeof(key) == sizeof(int_key), "double must be 64-bit");
+    memcpy(&int_key, &key, sizeof(int_key));
+    return ok_uint64_hash(int_key);
 }
 
 OK_LIB_API ok_hash_t ok_const_str_hash(const char *key) {
@@ -1117,9 +1121,13 @@ OK_LIB_API ok_hash_t ok_str_hash(char *key) {
 
 OK_LIB_API ok_hash_t ok_const_ptr_hash(const void *key) {
 #if UINTPTR_MAX == UINT32_MAX
-    return ok_uint32_hash(*(uint32_t *)&key);
+    uint32_t int_key;
+    memcpy(&int_key, &key, sizeof(int_key));
+    return ok_uint32_hash(int_key);
 #elif UINTPTR_MAX == UINT64_MAX
-    return ok_uint64_hash(*(uint64_t *)&key);
+    uint64_t int_key;
+    memcpy(&int_key, &key, sizeof(int_key));
+    return ok_uint64_hash(int_key);
 #else
     ok_static_assert(false, "Unknown pointer size");
     return 0;
