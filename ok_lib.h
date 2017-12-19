@@ -88,11 +88,9 @@
  Check if two variables have the same type.
  */
 #if defined(__GNUC__)
-#  define ok_static_assert_types_compatible(A, B) \
-     ok_static_assert(__builtin_types_compatible_p(__typeof(A), __typeof(B)), "Incompatible type")
+#  define ok_types_compatible(A, B) __builtin_types_compatible_p(__typeof(A), __typeof(B))
 #else
-#  define ok_static_assert_types_compatible(A, B)\
-     ok_static_assert(sizeof(A) == sizeof(B), "Incompatible type")
+#  define ok_types_compatible(A, B) (sizeof(A) == sizeof(B))
 #endif
 
 // MARK: Vector
@@ -817,7 +815,7 @@
  @tparam value The value to add. Must be an addressable rvalue.
  */
 #define ok_queue_push(queue, value) do { \
-     ok_static_assert_types_compatible((queue)->v, value); \
+    ok_static_assert(ok_types_compatible((queue)->v, value), "Incompatible types"); \
     _ok_queue_push(&(queue)->q, sizeof((queue)->v), &(value)); \
 } while (0)
 
@@ -829,7 +827,7 @@
  @return true on success, false if the queue is empty.
  */
 #define ok_queue_pop(queue, value_ptr) (\
-    (ok_static_assert_types_compatible((queue)->v, *(value_ptr)), 0), \
+    sizeof(char[ok_types_compatible((queue)->v, *(value_ptr)) ? 1 : -1]) && /* Type check */ \
     _ok_queue_pop(&(queue)->q, sizeof((queue)->v), (value_ptr)) \
 )
 
