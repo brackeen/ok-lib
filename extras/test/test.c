@@ -832,7 +832,7 @@ static void test_queue_multithreaded(void) {
     ok_queue_deinit(&queue2);
 
     int64_t end_time = ok_time_us();
-    printf("Multithreaded queue test duration: %llims\n", (end_time - start_time) / 1000);
+    printf("Multithreaded queue test duration: %ims\n", (int)((end_time - start_time) / 1000));
 
     // Make sure out_values has the values 1..(PRODUCER_THREAD_COUNT * VALUE_COUNT)
     bool values_valid = true;
