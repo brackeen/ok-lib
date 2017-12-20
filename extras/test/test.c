@@ -665,7 +665,15 @@ static void test_map(void) {
 #if !defined(_WIN32)
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/time.h>
 #define THREAD_RETURN_VALUE void *
+
+static int64_t ok_time_us(void) {
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return (int64_t)t.tv_sec * 1000000 + (int64_t)t.tv_usec;
+}
+
 #else
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -677,6 +685,16 @@ typedef HANDLE pthread_t;
 static inline int usleep(unsigned long useconds) {
     Sleep(useconds / 1000);
     return 0;
+}
+
+static int64_t ok_time_us(void) {
+    FILETIME filetime;
+    ULARGE_INTEGER large_int;
+
+    GetSystemTimeAsFileTime(&filetime);
+    large_int.LowPart = filetime.dwLowDateTime;
+    large_int.HighPart = filetime.dwHighDateTime;
+    return large_int.QuadPart / 10; // Convert from 100-nanosecond intervals to 1 us intervals
 }
 
 static int pthread_create(HANDLE *thread, const void *attr,
@@ -751,6 +769,15 @@ static void test_queue_multithreaded(void) {
     thread_context producer_thread_contexts[PRODUCER_THREAD_COUNT];
     thread_context consumer_thread_contexts[CONSUMER_THREAD_COUNT];
 
+    size_t count = PRODUCER_THREAD_COUNT * VALUE_COUNT;
+    datatype *out_values = calloc(count, sizeof(datatype));
+    if (!out_values) {
+        printf("Error: Not enough memory");
+        return;
+    }
+
+    int64_t start_time = ok_time_us();
+
     queue_t queue1 = OK_QUEUE_INIT;
     queue_t queue2;
     ok_queue_init(&queue2);
@@ -786,13 +813,7 @@ static void test_queue_multithreaded(void) {
     bool is_empty = !ok_queue_pop(&queue1, &value);
     ok_assert(is_empty, "queue1 not empty");
 
-    // Make sure queue2 has the values 1..(PRODUCER_THREAD_COUNT * VALUE_COUNT)
-    size_t count = PRODUCER_THREAD_COUNT * VALUE_COUNT;
-    datatype *values = calloc(count, sizeof(datatype));
-    if (!values) {
-        printf("Error: Not enough memory");
-        return;
-    }
+    // Dump contents of queue2 to out_values
     bool prematurely_empty = false;
     for (size_t i = 0; i < count; i++) {
         datatype value;
@@ -800,17 +821,24 @@ static void test_queue_multithreaded(void) {
             prematurely_empty = true;
             break;
         }
-        values[i] = value;
+        out_values[i] = value;
     }
     ok_assert(!prematurely_empty, "queue2 not full");
 
     is_empty = !ok_queue_pop(&queue2, &value);
     ok_assert(is_empty, "queue2 not empty");
 
+    ok_queue_deinit(&queue1);
+    ok_queue_deinit(&queue2);
+
+    int64_t end_time = ok_time_us();
+    printf("Multithreaded queue test duration: %llims\n", (end_time - start_time) / 1000);
+
+    // Make sure out_values has the values 1..(PRODUCER_THREAD_COUNT * VALUE_COUNT)
     bool values_valid = true;
-    qsort((void *)values, count, sizeof(*values), datatype_cmp);
+    qsort((void *)out_values, count, sizeof(*out_values), datatype_cmp);
     for (size_t i = 0; i < count; i++) {
-        if (values[i] != (datatype)(i + 1)) {
+        if (out_values[i] != (datatype)(i + 1)) {
             values_valid = false;
             break;
         }
@@ -818,9 +846,7 @@ static void test_queue_multithreaded(void) {
 
     ok_assert(values_valid, "queue2 has incorrect values");
 
-    free(values);
-    ok_queue_deinit(&queue1);
-    ok_queue_deinit(&queue2);
+    free(out_values);
 }
 
 static void str_deallocator(void *value_ptr) {
