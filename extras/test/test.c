@@ -682,11 +682,6 @@ typedef HANDLE pthread_t;
 
 #define THREAD_RETURN_VALUE DWORD WINAPI
 
-static inline int usleep(unsigned long useconds) {
-    Sleep(useconds / 1000);
-    return 0;
-}
-
 static int64_t ok_time_us(void) {
     FILETIME filetime;
     ULARGE_INTEGER large_int;
@@ -715,7 +710,7 @@ static int pthread_join(HANDLE thread, void **value_ptr) {
 
 #define PRODUCER_THREAD_COUNT 8
 #define CONSUMER_THREAD_COUNT 8
-#define VALUE_COUNT 50000
+#define VALUE_COUNT 100000
 
 typedef long datatype;
 
@@ -741,9 +736,6 @@ static THREAD_RETURN_VALUE producer_thread_entry(void *context) {
     thread_context *c = context;
     datatype value = c->value;
     for (int i = 0; i < VALUE_COUNT; i++) {
-        if ((i % 100) == 0) {
-            usleep(1000);
-        }
         ok_queue_push(c->queue1, value);
         value++;
     }
@@ -758,8 +750,6 @@ static THREAD_RETURN_VALUE consumer_thread_entry(void *context) {
             ok_queue_push(c->queue2, value);
         } else if (atomic_load(&production_complete)) {
             break;
-        } else {
-            usleep(1000);
         }
     }
     return 0;
