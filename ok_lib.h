@@ -736,7 +736,7 @@
 
  When finished using the queue, the #ok_queue_deinit() function must be called.
  */
-#define OK_QUEUE_INIT { { NULL, NULL, NULL, false, false, OK_QUEUE_DEFAULT_CAPACITY }, 0 }
+#define OK_QUEUE_INIT { { NULL, NULL, NULL, false, false, OK_QUEUE_DEFAULT_CAPACITY }, NULL }
 
 /**
  Declares a generic `ok_queue` struct or typedef.
@@ -755,7 +755,7 @@
  */
 #define ok_queue_of(value_type) { \
     struct _ok_queue q; \
-    value_type v; \
+    value_type *v; \
 }
 
 /**
@@ -786,7 +786,7 @@
  @tparam capacity The minimum number of values the queue can hold.
  */
 #define ok_queue_init_with_capacity(queue, capacity) \
-    _ok_queue_init(&(queue)->q, sizeof((queue)->v), capacity)
+    _ok_queue_init(&(queue)->q, sizeof(*(queue)->v), capacity)
 
 /**
  Deinits the queue. The queue may be used again by calling #ok_queue_init().
@@ -806,7 +806,7 @@
  @tparam deallocator The deallocator function, declared as `void (*deallocator)(void *)`.
  */
 #define ok_queue_deinit_with_deallocator(queue, deallocator) \
-    _ok_queue_deinit(&(queue)->q, sizeof((queue)->v), (deallocator))
+    _ok_queue_deinit(&(queue)->q, sizeof(*(queue)->v), (deallocator))
 
 /**
  Adds a value to the back of the queue.
@@ -815,8 +815,8 @@
  @tparam value The value to add. Must be an addressable rvalue.
  */
 #define ok_queue_push(queue, value) do { \
-    ok_static_assert(ok_types_compatible((queue)->v, value), "Incompatible types"); \
-    _ok_queue_push(&(queue)->q, sizeof((queue)->v), &(value)); \
+    ok_static_assert(ok_types_compatible(*(queue)->v, value), "Incompatible types"); \
+    _ok_queue_push(&(queue)->q, sizeof(*(queue)->v), &(value)); \
 } while (0)
 
 /**
@@ -827,8 +827,8 @@
  @return true on success, false if the queue is empty.
  */
 #define ok_queue_pop(queue, value_ptr) (\
-    sizeof(char[ok_types_compatible((queue)->v, *(value_ptr)) ? 1 : -1]) && /* Type check */ \
-    _ok_queue_pop(&(queue)->q, sizeof((queue)->v), (value_ptr)) \
+    sizeof(char[ok_types_compatible(*(queue)->v, *(value_ptr)) ? 1 : -1]) && /* Type check */ \
+    _ok_queue_pop(&(queue)->q, sizeof(*(queue)->v), (value_ptr)) \
 )
 
 #endif // __EMSCRIPTEN__
