@@ -1550,21 +1550,30 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #else
 #  error stdatomic.h required
 #endif
+#if defined(_MSC_VER)
+#  define OK_ALIGNAS(N) __declspec(align(N))
+#elif defined(__GNUC__)
+#  define OK_ALIGNAS(N) __attribute__((aligned(N)))
+#else
+#  define OK_ALIGNAS(N) _Alignas(N)
+#endif
+
+#define OK_CACHELINE_SIZE 64
 
 struct _ok_queue_block {
-    void *values;
-    struct _ok_queue_block *next;
-    size_t head_index;
-    _Atomic(size_t) tail_index;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) void *values;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) struct _ok_queue_block *next;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) size_t head_index;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(size_t) tail_index;
 };
 
 struct _ok_queue {
-    _Atomic(struct _ok_queue_block *) head_block;
-    _Atomic(struct _ok_queue_block *) tail_block;
-    _Atomic(struct _ok_queue_block *) free_block;
-    _Atomic(bool) head_lock;
-    _Atomic(bool) tail_lock;
-    size_t block_capacity;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) head_block;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) tail_block;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) free_block;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(bool) head_lock;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(bool) tail_lock;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) size_t block_capacity;
 };
 
 OK_LIB_API struct _ok_queue_block *_ok_queue_new_block(const struct _ok_queue *queue,

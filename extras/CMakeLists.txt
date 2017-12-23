@@ -45,7 +45,7 @@ elseif (CMAKE_C_COMPILER_ID MATCHES "GNU")
   target_link_libraries(ok-lib-test pthread)
 elseif (CMAKE_C_COMPILER_ID MATCHES "MSVC")
   # Disable 'shadow variables', 'function not inlined', and 'struct padding'
-  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 /wd4820 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
+  set_target_properties(ok-lib-test PROPERTIES COMPILE_FLAGS "/Wall /wd4456 /wd4710 /wd4820 /wd4324 ${TREAT_WARNINGS_AS_ERRORS_FLAG}")
 endif()
 
 # CTest setup, using valgrind if found. Do not use valgrind on macOS, which crashes when starting threads
