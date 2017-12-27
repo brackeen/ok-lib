@@ -1542,7 +1542,7 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
 #  define _Atomic(T) T
 #  define atomic_load(object) __atomic_load_n((object), __ATOMIC_SEQ_CST)
-#  define atomic_store(object, desired) __atomic_store_n(object, desired, __ATOMIC_SEQ_CST);
+#  define atomic_store(object, desired) __atomic_store_n(object, desired, __ATOMIC_SEQ_CST)
 #  define atomic_compare_exchange_strong(object, expected, desired) \
      __atomic_compare_exchange_n(object, expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 #  define OK_LOCK(lock) do { } while (__atomic_exchange_n((lock), true, __ATOMIC_ACQUIRE))
