@@ -1531,16 +1531,16 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #  pragma warning(push, 0)
 #  include <windows.h>
 #  pragma warning(pop)
-#  define _Atomic(T) T
+#  define _Atomic(T) T volatile
 #  define atomic_load(object) (MemoryBarrier(), *(object))
 #  define atomic_store(object, desired) do { *(object) = (desired); MemoryBarrier(); } while (0)
 #  define atomic_compare_exchange_strong(object, expected, desired) \
-     (InterlockedCompareExchangePointer((volatile PVOID *)(object), (desired), *(expected)) \
+     (InterlockedCompareExchangePointer((PVOID volatile *)(object), (desired), *(expected)) \
        == *(expected))
 #  define OK_LOCK(lock) do { } while (InterlockedExchange8((char *)(lock), 1))
 #  define OK_UNLOCK(lock) atomic_store((lock), 0)
 #elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
-#  define _Atomic(T) T
+#  define _Atomic(T) T volatile
 #  define atomic_load(object) __atomic_load_n((object), __ATOMIC_SEQ_CST)
 #  define atomic_store(object, desired) __atomic_store_n(object, desired, __ATOMIC_SEQ_CST)
 #  define atomic_compare_exchange_strong(object, expected, desired) \
