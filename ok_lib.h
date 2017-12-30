@@ -1524,6 +1524,7 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #endif
 #if defined(OK_LIB_USE_STDATOMIC)
 #  include <stdatomic.h>
+#  define OK_LOCK_TYPE _Atomic(bool)
 #  define OK_LOCK(lock) do { } while (atomic_exchange_explicit((lock), true, memory_order_acquire))
 #  define OK_UNLOCK(lock) atomic_store_explicit((lock), false, memory_order_release)
 #elif defined(_MSC_VER)
@@ -1537,14 +1538,17 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #  define atomic_compare_exchange_strong(object, expected, desired) \
      (InterlockedCompareExchangePointer((PVOID volatile *)(object), (desired), *(expected)) \
        == *(expected))
-#  define OK_LOCK(lock) do { } while (InterlockedExchange8((char *)(lock), 1))
+#  define OK_LOCK_TYPE LONG volatile
+#  define OK_LOCK(lock) do { } while (InterlockedExchange((lock), 1))
 #  define OK_UNLOCK(lock) atomic_store((lock), 0)
 #elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
 #  define _Atomic(T) T volatile
 #  define atomic_load(object) __atomic_load_n((object), __ATOMIC_SEQ_CST)
-#  define atomic_store(object, desired) __atomic_store_n(object, desired, __ATOMIC_SEQ_CST)
+#  define atomic_store(object, desired) __atomic_store_n((object), (desired), __ATOMIC_SEQ_CST)
 #  define atomic_compare_exchange_strong(object, expected, desired) \
-     __atomic_compare_exchange_n(object, expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+     __atomic_compare_exchange_n((object), (expected), (desired), 0, __ATOMIC_SEQ_CST, \
+                                 __ATOMIC_SEQ_CST)
+#  define OK_LOCK_TYPE bool volatile
 #  define OK_LOCK(lock) do { } while (__atomic_exchange_n((lock), true, __ATOMIC_ACQUIRE))
 #  define OK_UNLOCK(lock) (void)__atomic_exchange_n((lock), false, __ATOMIC_RELEASE)
 #else
@@ -1571,8 +1575,8 @@ struct _ok_queue {
     OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) head_block;
     OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) tail_block;
     OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(struct _ok_queue_block *) free_block;
-    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(bool) head_lock;
-    OK_ALIGNAS(OK_CACHELINE_SIZE) _Atomic(bool) tail_lock;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) OK_LOCK_TYPE head_lock;
+    OK_ALIGNAS(OK_CACHELINE_SIZE) OK_LOCK_TYPE tail_lock;
     OK_ALIGNAS(OK_CACHELINE_SIZE) size_t block_capacity;
 };
 
@@ -1739,9 +1743,6 @@ OK_LIB_API void _ok_queue_deinit(struct _ok_queue *queue, size_t value_size,
     OK_UNLOCK(&queue->head_lock);
     OK_UNLOCK(&queue->tail_lock);
 }
-
-#undef OK_LOCK
-#undef OK_UNLOCK
 
 #endif // __EMSCRIPTEN__
 
