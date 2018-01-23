@@ -1525,7 +1525,8 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #if defined(OK_LIB_USE_STDATOMIC)
 #  include <stdatomic.h>
 #  define OK_LOCK_TYPE _Atomic(bool)
-#  define OK_LOCK(lock) do { } while (atomic_exchange_explicit((lock), true, memory_order_acquire))
+#  define OK_TRYLOCK(lock) (atomic_exchange_explicit((lock), true, memory_order_acquire) == false)
+#  define OK_LOCK(lock) do { } while (!OK_TRYLOCK(lock))
 #  define OK_UNLOCK(lock) atomic_store_explicit((lock), false, memory_order_release)
 #elif defined(_MSC_VER)
 #  define WIN32_LEAN_AND_MEAN
@@ -1539,7 +1540,8 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
      (InterlockedCompareExchangePointer((PVOID volatile *)(object), (desired), *(expected)) \
        == *(expected))
 #  define OK_LOCK_TYPE LONG volatile
-#  define OK_LOCK(lock) do { } while (InterlockedExchange((lock), 1))
+#  define OK_TRYLOCK(lock) (InterlockedExchange((lock), 1) == 0)
+#  define OK_LOCK(lock) do { } while (!OK_TRYLOCK(lock))
 #  define OK_UNLOCK(lock) atomic_store((lock), 0)
 #elif defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4)
 #  define _Atomic(T) T volatile
@@ -1549,7 +1551,8 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
      __atomic_compare_exchange_n((object), (expected), (desired), 0, __ATOMIC_SEQ_CST, \
                                  __ATOMIC_SEQ_CST)
 #  define OK_LOCK_TYPE bool volatile
-#  define OK_LOCK(lock) do { } while (__atomic_exchange_n((lock), true, __ATOMIC_ACQUIRE))
+#  define OK_TRYLOCK(lock) (__atomic_exchange_n((lock), true, __ATOMIC_ACQUIRE) == false)
+#  define OK_LOCK(lock) do { } while (!OK_TRYLOCK(lock))
 #  define OK_UNLOCK(lock) (void)__atomic_exchange_n((lock), false, __ATOMIC_RELEASE)
 #else
 #  error stdatomic.h required
