@@ -839,6 +839,14 @@ static void test_queue_multithreaded(void) {
     free(out_values);
 }
 
+#else
+
+static void test_queue_multithreaded(void) {
+    // Emscripten: Do nothing
+}
+
+#endif // __EMSCRIPTEN__
+
 static void str_deallocator(void *value_ptr) {
     char *str = *(char **)value_ptr;
     //printf("Deallocating: %s\n", str);
@@ -914,14 +922,6 @@ static void test_queue(void) {
 
     test_queue_multithreaded();
 }
-
-#else
-
-static void test_queue(void) {
-    // Emscripten: Do nothing
-}
-
-#endif // __EMSCRIPTEN__
 
 int main(void) {
     //ok_static_assert(2 + 2 == 5, "2+2 is not 5");

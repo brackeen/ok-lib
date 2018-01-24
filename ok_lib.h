@@ -721,8 +721,6 @@
 
 // MARK: Concurrent queue
 
-#if !defined(__EMSCRIPTEN__)
-
 /**
  The default capacity of a queue. This is the minimum capacity; queues can grow in size.
  */
@@ -830,8 +828,6 @@
     sizeof(char[ok_types_compatible(*(queue)->v, *(value_ptr)) ? 1 : -1]) && /* Type check */ \
     _ok_queue_pop(&(queue)->q, sizeof(*(queue)->v), (value_ptr)) \
 )
-
-#endif // __EMSCRIPTEN__
 
 // MARK: Declarations: Hash functions
 
@@ -997,8 +993,6 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key,
 OK_LIB_API void *_ok_map_next(const struct _ok_map *map, void *iterator, void *key,
                               size_t key_size, void *value, size_t value_size);
 
-#if !defined(__EMSCRIPTEN__)
-
 OK_LIB_API struct _ok_queue_block *_ok_queue_new_block(const struct _ok_queue *queue,
                                                        size_t value_size);
 
@@ -1022,8 +1016,6 @@ OK_LIB_API void _ok_queue_init(struct _ok_queue *queue, size_t value_size, size_
 
 OK_LIB_API void _ok_queue_deinit(struct _ok_queue *queue, size_t value_size,
                                  void (*deallocator)(void *));
-
-#endif // __EMSCRIPTEN__
 
 // MARK: Implementation: Hash functions
 
@@ -1493,8 +1485,6 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 
 // MARK: Implementation: Private queue functions
 
-#if !defined(__EMSCRIPTEN__)
-
 /*
  Queue
  - Multi-consumer, multi-producer concurrent queue.
@@ -1515,7 +1505,7 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
  - Clang 3.6 has a bug where it will use GCC's stdatomic.h by mistake, causing a build error.
  */
 
-#if !defined(OK_LIB_USE_STDATOMIC)
+#if !defined(OK_LIB_USE_STDATOMIC) && !defined(__EMSCRIPTEN__)
 #  if defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 7))
 #    define OK_LIB_USE_STDATOMIC
 #  elif defined(__GNUC__) && !defined(__cplusplus) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))
@@ -1528,6 +1518,21 @@ OK_LIB_API bool _ok_map_remove(struct _ok_map *map, const void *key, ok_hash_t k
 #  define OK_TRYLOCK(lock) (atomic_exchange_explicit((lock), true, memory_order_acquire) == false)
 #  define OK_LOCK(lock) do { } while (!OK_TRYLOCK(lock))
 #  define OK_UNLOCK(lock) atomic_store_explicit((lock), false, memory_order_release)
+#elif defined(__EMSCRIPTEN__) // Assume single-threaded operation
+#  if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wreserved-id-macro"
+#    define _Atomic(T) T
+#    pragma clang diagnostic pop
+#  endif
+#  define atomic_load(object) *(object)
+#  define atomic_store(object, value) *(object) = value
+#  define atomic_compare_exchange_strong(object, expected, desired) \
+     (*(object) == *(expected) ? ((*(object) = desired), true) : false)
+#  define OK_LOCK_TYPE _Atomic(bool)
+#  define OK_TRYLOCK(lock) (*(lock) == false ? (*(lock) = true) : false)
+#  define OK_LOCK(lock) do { } while (!OK_TRYLOCK(lock))
+#  define OK_UNLOCK(lock) (*(lock) = false)
 #elif defined(_MSC_VER)
 #  define WIN32_LEAN_AND_MEAN
 #  pragma warning(push, 0)
@@ -1746,8 +1751,6 @@ OK_LIB_API void _ok_queue_deinit(struct _ok_queue *queue, size_t value_size,
     OK_UNLOCK(&queue->head_lock);
     OK_UNLOCK(&queue->tail_lock);
 }
-
-#endif // __EMSCRIPTEN__
 
 #if defined(__GNUC__)
 #  pragma GCC diagnostic pop
