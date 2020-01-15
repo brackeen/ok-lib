@@ -1,7 +1,7 @@
 /*
  ok-lib
  https://github.com/brackeen/ok-lib
- Copyright (c) 2016-2017 David Brackeen
+ Copyright (c) 2016-2020 David Brackeen
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  associated documentation files (the "Software"), to deal in the Software without restriction,
