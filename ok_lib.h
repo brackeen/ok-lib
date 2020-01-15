@@ -1340,8 +1340,10 @@ OK_LIB_API struct _ok_map *_ok_map_create(size_t initial_capacity,
 }
 
 OK_LIB_API void _ok_map_free(struct _ok_map *map) {
-    free(map->buckets);
-    free(map);
+    if (map) {
+        free(map->buckets);
+        free(map);
+    }
 }
 
 OK_LIB_API size_t _ok_map_count(const struct _ok_map *map) {
